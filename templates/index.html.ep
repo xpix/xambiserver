@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+  <head>
+     <meta charset="utf-8">
+     <title>XAmbiServer - HomeMon</title>
+     <link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/dark-hive/jquery-ui.css">
+     <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+     <script src="//code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
+     <link rel="stylesheet" href="/resources/demos/style.css">
+     <script>
+     $(function() {
+       $( "#Rooms" ).tabs();
+     });
+     </script>
+  </head>
+<body style="background: rgb(51,51,51); font-size: 10px;">
+   
+ <script>
+   var events = new EventSource('<%= url_for 'events' %>');
+   // Subscribe to "msg" event
+   events.addEventListener('msg', function(event) {
+     document.body.innerHTML += event.data + '<br/>';
+   }, false);
+ </script>
+</body>
+
+<div id="headine" class="ui-widget ui-widget-content ui-corner-all">
+   <center><H1>XAmbiServer</H1></center>
+</div>
+
+<div id="Rooms">
+  <ul>
+   % for my $room (@$rooms) {
+     <li><a href="#Room_<%= $room %>">Room <%= $room %></a></li>
+   % }
+  </ul>
+   % for my $room (@$rooms) {
+<!-- Besser orgaisieren, jeder Sender soll ein Div haben mit seinen Eckwerten 
+     über Widgets designs nachdenken oder klauen:
+     https://google-developers.appspot.com/chart/interactive/docs/gallery/gauge
+-->
+     <div id="Room_<%= $room %>">
+      % for my $sensor (@$sensors) { next if($sensor->{name} !~ /\/$room\//);
+        <div id="#Sensor_<%= $sensor->{name} %>" class="ui-widget ui-widget-content ui-corner-all">
+         % for my $value (@{$sensor->{werte}}) {
+            <div id="#Sensor_Value<%= $value->{name} %>" class="ui-corner-all">
+               <%= $value->{name} %> = <%= $value->{value} %>
+            </div>
+         % }
+        </div>
+      % }
+     </div>
+   % }
+</div>
+
+</body>
+</html>
+

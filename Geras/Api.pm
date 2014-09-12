@@ -1,0 +1,280 @@
+package Geras::Api;
+
+use warnings;
+use strict;
+
+use LWP::UserAgent;
+use JSON::XS;
+use Cache::File;
+use AnyEvent::MQTT;
+
+my $ERRORS;
+#===============================================================================
+=pod
+
+=head1 NAME
+
+Geras::Api - Module to get a all data from geras.1248.io.
+
+=head1 SYNOPSIS
+
+  my $geras = Geras::Api->new({
+   apikey  => 'kjdahdkjhasdlkj...'}
+  );
+  my $list = $geras->series();
+  die $list->error() if($list->error());
+
+=head1 DESCRIPTION
+
+Package to manage API Calls via http json to geras api.
+
+=cut
+
+#-------------------------------------------------------------------------------
+sub new {
+#-------------------------------------------------------------------------------
+   my $class = shift;
+   my $args  = shift;
+   my $self  = { };
+
+   bless($self, $class);
+
+   # API Data
+   $self->{'apikey'}  = delete $args->{'apikey'} || die "No Apikey in new!";
+   $self->{'host'}    = delete $args->{'host'}   || 'geras.1248.io';
+
+   $self->{'cache'}   = Cache::File->new( 
+      cache_root => '/tmp/GERASCACHE'
+   );
+
+   $self->{'mqtt'} =
+      AnyEvent::MQTT->new(
+         host     => $self->{'host'}, 
+         user     => '',
+         password => $self->{apikey},
+         on_error => $self->error
+      );
+
+   return $self;
+}
+
+#-------------------------------------------------------------------------------
+sub error {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || die "No Object!";
+   my $msg   = shift || return $ERRORS;
+
+   warn $msg;
+   $ERRORS = []
+      if(not defined $ERRORS);
+
+   push(@$ERRORS, $msg);
+   
+   return undef;
+}
+
+#-------------------------------------------------------------------------------
+sub publish {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || die "No Object!";
+   my $serie = shift || die "No Serie!";
+   my $value = shift || '';
+
+   # Pack in Array
+   if(not ref $serie eq 'ARRAY'){
+      $serie = [{$serie => $value}];
+   }
+
+   foreach my $entry (@$serie){
+      my($topic, $value) = each %$entry;
+      my $condvar = 
+         $obj->{'mqtt'}->publish(
+            topic    => $topic,
+            message  => $value,
+         );
+      $condvar->recv;
+   }
+   return 1;
+}
+
+
+#-------------------------------------------------------------------------------
+sub series {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $only = shift || '';
+   
+   $obj->_getJSON('/serieslist', $only);
+}
+
+#-------------------------------------------------------------------------------
+sub series_unique {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $topic = shift || 0;
+   
+   my $entrys = {};
+   foreach my $serie (@{$obj->series}){
+      my @tokens = split(/\//, $serie);
+      $entrys->{$tokens[$topic+1]} = 1;
+   }
+
+   return [sort keys %$entrys];
+}
+
+
+
+#-------------------------------------------------------------------------------
+sub series_delete {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $serie   =shift || die "No Serie to delete!";
+   
+   $obj->{cache}->clear();
+   $obj->_getHTTP('/series'.$serie, undef, 'DELETE');
+}
+
+#-------------------------------------------------------------------------------
+sub shares {
+#-------------------------------------------------------------------------------
+   my $obj     = shift || die "No Object!";
+   my $type    = shift || '';
+   $type = ($type ? 'woshare' : 'share');   
+   
+   $obj->_getJSON('/'.$type);
+}
+
+#-------------------------------------------------------------------------------
+sub share_delete {
+#-------------------------------------------------------------------------------
+   my $obj        = shift || die "No Object!";
+   my $share      = shift || die "No Share to delete!";
+   my $type       = shift || '';
+   $type = ($type ? 'woshare' : 'share');   
+
+   $obj->{cache}->clear();
+   $obj->_getHTTP('/'.$type.$share, undef, 'DELETE');
+}
+
+#-------------------------------------------------------------------------------
+sub rollup {
+#-------------------------------------------------------------------------------
+   my $obj     = shift || die "No Object!";
+   my $serie   =shift || die "No Serie!";
+   my $rollup  =shift || die "No Rollup ('min','max','avg','sum')!";
+   my $interval=shift || die "No Interval ('s','m','h','d','w','mo','y')!";
+
+   my $possibleRollup = ['min','max','avg','sum'];
+   my $possibleInterval = ['s','m','h','d','w','mo','y'];
+
+   die "Rollup $rollup are not correct!"
+      if(not grep(/^$rollup$/i, @$possibleRollup));
+
+   my $url = sprintf('/series%s?rollup=%s&interval=%s', $serie, $rollup, $interval);
+
+   $obj->_getJSON($url);
+}
+
+#-------------------------------------------------------------------------------
+sub timewindow {
+#-------------------------------------------------------------------------------
+   my $obj     =shift || die "No Object!";
+   my $serie   =shift || die "No Serie!";
+   my $start   =shift || die "No Starttime in seconds since epoch";
+   my $end     =shift || die "No Endtime in seconds since epoch";
+
+   my $url = sprintf('/series%s?start=%s&end=%s', $serie, $start, $end);
+   
+   $obj->_getJSON($url);
+}
+
+#-------------------------------------------------------------------------------
+sub lastvalue {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $serie=shift || die "No Serie!";
+   my $only = shift || '';
+   
+   $obj->_getJSON('/now/'.$serie);
+}
+
+
+#-------------------------------------------------------------------------------
+sub _makeHash {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $entrys = shift || {};
+   
+   my $return = {};
+   foreach my $entry (@{$entrys->{e}}){
+      $return->{$entry->{t}} = $entry->{v};
+   }
+
+   return $return;
+}
+
+#-------------------------------------------------------------------------------
+sub _getHTTP {
+#-------------------------------------------------------------------------------
+   my $obj = shift   || die "No Object!";
+   my $url = shift   || die "No URL!";
+   my $only = shift  || '';
+   my $type = shift  || 'GET';
+
+   $url = sprintf('http://%s%s', $obj->{host}, $url);
+   warn "$type: $url";
+   
+   my $ua = LWP::UserAgent->new();
+   my $req = HTTP::Request->new($type, $url);
+   $req->authorization_basic($obj->{apikey}, '');
+      
+   my $res = $ua->request($req);
+   if($res->is_success){
+      return $res->content;
+   }
+   else {
+      die $res->status_line;
+   }
+}
+
+
+#-------------------------------------------------------------------------------
+sub _getJSON {
+#-------------------------------------------------------------------------------
+   my $obj = shift   || die "No Object!";
+   my $url = shift   || die "No URL!";
+   my $only = shift  || '';
+   my $type = shift  || 'GET';
+
+   $url = sprintf('http://%s%s', $obj->{host}, $url);
+   warn "$type: $url";
+   my $json;
+   
+   # Cached results?
+   my $cached = $obj->{cache}->get($url);
+   if($cached){
+      $json = decode_json($cached);
+   }
+   else {
+      my $ua = LWP::UserAgent->new();
+      my $req = HTTP::Request->new($type, $url);
+      $req->authorization_basic($obj->{apikey}, '');
+      
+      my $res = $ua->request($req);
+      if($res->is_success){
+         my $content = $res->content;
+         $obj->{cache}->set($url, $content);
+         $json = decode_json($content);
+      }
+      else {
+         die $res->status_line;
+      }
+   }
+
+   if(ref $json eq 'ARRAY'){
+      return [grep(/$only/i, @$json)];
+   } 
+   return $obj->_makeHash($json);
+}
+
+1;
