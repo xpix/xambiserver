@@ -8,6 +8,9 @@ use JSON::XS;
 use Cache::File;
 use AnyEvent::MQTT;
 
+use Data::Dumper;
+sub dum { printf "DEBUG: %s\n", Dumper(@_); };
+
 my $ERRORS;
 #===============================================================================
 =pod
@@ -122,8 +125,6 @@ sub series_unique {
    return [sort keys %$entrys];
 }
 
-
-
 #-------------------------------------------------------------------------------
 sub series_delete {
 #-------------------------------------------------------------------------------
@@ -133,6 +134,126 @@ sub series_delete {
    $obj->{cache}->clear();
    $obj->_getHTTP('/series'.$serie, undef, 'DELETE');
 }
+
+#-------------------------------------------------------------------------------
+sub series_add_to_group {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $serie =shift || die "No Serie to delete!";
+   my $group =shift || die "No Serie to delete!";
+
+   ($serie) = $obj->series($serie)
+      or return $obj->error("Can't find serie $serie!");
+
+   $group = $obj->groups($group)
+      or return $obj->error("Can't find group $group!");
+
+dum($group);
+
+   my($groupname, $groupvalues) = each(%$group);
+   push(@$groupvalues, @$serie); 
+   $groupname = (split('/', $groupname))[-1];
+   
+   $obj->groups_new($groupname, $groupvalues); 
+}
+
+#-------------------------------------------------------------------------------
+sub series_remove_from_group {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $serie =shift || die "No Serie to delete!";
+   my $group =shift || die "No Serie to delete!";
+
+   my $serieHash;
+   ($serie) = $obj->series($serie)
+      or return $obj->error("Can't find serie $serie!");
+   map {$serieHash->{$_} = 1} @$serie;
+   
+   ($group) = $obj->groups($group)
+      or return $obj->error("Can't find group $group!");
+
+   my($groupname, $groupvalues) = each(%$group);
+   $groupname = (split('/', $groupname))[-1];
+
+   my $newGroupValues = [];
+   foreach my $groupvalue (@$groupvalues){
+      push(@$newGroupValues, $groupvalue) 
+         if(not exists $serieHash->{$groupvalue});
+   }
+   
+   $obj->groups_new($groupname, $newGroupValues); 
+}
+
+#-------------------------------------------------------------------------------
+sub series_move_to_group {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $serietag =shift || die "No Serie to delete!";
+   my $group =shift || die "No Serie to delete!";
+
+   my ($serie) = $obj->series($serietag)
+      or return $obj->error("Can't find serie $serietag!");
+
+   ($group) = $obj->groups($group)
+      or return $obj->error("Can't find group $group!");
+
+   # Try to find serie in an old group ..   
+   my $sourceGroupName = '';
+   my $allGroups = $obj->groups();
+   foreach my $groupName (sort keys %$allGroups){
+      foreach my $groupValue (@{$allGroups->{$groupName}}){
+         if($groupValue =~ /\/$serietag\//){
+            $sourceGroupName = $groupName;
+         }
+      }
+   }
+   # remove from old group ...
+   if($sourceGroupName){
+dum($sourceGroupName);
+      $obj->series_remove_from_group($serietag, $sourceGroupName);
+   }
+   # ... and add to new group
+   $obj->series_add_to_group($serietag, $group);
+}
+
+#-------------------------------------------------------------------------------
+sub groups {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $only = shift || '';
+   
+   $obj->_getJSON('/group', $only);
+}
+
+#-------------------------------------------------------------------------------
+sub groups_new {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $name = shift || die "No Name!";
+   my $list = shift || [];
+
+   my $data = {
+      group_id => $name,
+      list => $list,
+   };
+   
+   $obj->{cache}->clear();
+   $obj->_getJSON('/group', $data, 'POST');
+}
+
+#-------------------------------------------------------------------------------
+sub groups_delete {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $name = shift || die "No Name!";
+   
+   my ($todelete) = keys %{$obj->groups($name)}
+      or return $obj->error("Can't find group $name for delete!");
+
+   $obj->{cache}->clear();
+   $obj->_getHTTP($todelete, undef, 'DELETE');
+}
+
 
 #-------------------------------------------------------------------------------
 sub shares {
@@ -246,25 +367,36 @@ sub _getJSON {
    my $only = shift  || '';
    my $type = shift  || 'GET';
 
+   $type = uc $type if($type);  
+
+   my $data = encode_json($only) and $only = ''
+      if(ref $only);
+   
    $url = sprintf('http://%s%s', $obj->{host}, $url);
    warn "$type: $url";
    my $json;
    
    # Cached results?
    my $cached = $obj->{cache}->get($url);
-   if($cached){
+   if($cached and $type eq 'GET'){
       $json = decode_json($cached);
    }
    else {
       my $ua = LWP::UserAgent->new();
       my $req = HTTP::Request->new($type, $url);
       $req->authorization_basic($obj->{apikey}, '');
+      if($data){
+          $req->header( 'Content-Type' => 'application/json' );
+          $req->content($data);
+      }
+
       
       my $res = $ua->request($req);
       if($res->is_success){
          my $content = $res->content;
-         $obj->{cache}->set($url, $content);
-         $json = decode_json($content);
+         $obj->{cache}->set($url, $content)
+            if($type eq 'GET');
+         $json = eval{ decode_json($content) } || $json;
       }
       else {
          die $res->status_line;
@@ -272,9 +404,27 @@ sub _getJSON {
    }
 
    if(ref $json eq 'ARRAY'){
-      return [grep(/$only/i, @$json)];
-   } 
+      return [grep(/$only\//i, @$json)];
+   }
+   elsif(ref $json eq 'HASH'){
+      my $return = {};
+      foreach my $key (keys %$json){
+         $return->{$key} = $json->{$key}
+            if($key eq $only or $key =~ /\/$only$/i or $key =~ /$only\//i);
+      }
+      return $return;
+   }
    return $obj->_makeHash($json);
 }
+
+#-------------------------------------------------------------------------------
+sub clearCache {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $entry = shift || '';
+   
+   $obj->{cache}->clear();
+}
+
 
 1;

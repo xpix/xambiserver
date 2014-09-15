@@ -6,7 +6,6 @@
      <link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/dark-hive/jquery-ui.css">
      <script src="//code.jquery.com/jquery-1.10.2.js"></script>
      <script src="//code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
-     <link rel="stylesheet" href="/resources/demos/style.css">
      <script>
      $(function() {
        $( "#Rooms" ).tabs();
@@ -15,13 +14,15 @@
   </head>
 <body style="background: rgb(51,51,51); font-size: 10px;">
    
- <script>
+<script>
+   /* 
    var events = new EventSource('<%= url_for 'events' %>');
    // Subscribe to "msg" event
    events.addEventListener('msg', function(event) {
      document.body.innerHTML += event.data + '<br/>';
    }, false);
- </script>
+   */
+</script>
 </body>
 
 <div id="headine" class="ui-widget ui-widget-content ui-corner-all">
@@ -35,10 +36,6 @@
    % }
   </ul>
    % for my $room (@$rooms) {
-<!-- Besser orgaisieren, jeder Sender soll ein Div haben mit seinen Eckwerten 
-     über Widgets designs nachdenken oder klauen:
-     https://google-developers.appspot.com/chart/interactive/docs/gallery/gauge
--->
      <div id="Room_<%= $room %>">
       % for my $sensor (@$sensors) { next if($sensor->{name} !~ /\/$room\//);
         <div id="#Sensor_<%= $sensor->{name} %>" class="ui-widget ui-widget-content ui-corner-all">

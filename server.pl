@@ -1,6 +1,11 @@
 use warnings;
 use strict;
 
+# only for debug
+use Data::Dumper;
+sub dum { print Dumper(@_)};
+
+
 use Mojolicious::Lite;
 use Mojo::IOLoop;
 use AnyEvent::SerialPort;
@@ -11,6 +16,7 @@ my $geras = Geras::Api->new({
    apikey => '9ca6362e6051ec2588074f23a7fb7afe',
    host   => 'geras.1248.io',
 });
+$geras->clearCache;
 
 # SerialPort read Event
 my $hdl = 
@@ -22,9 +28,8 @@ my $hdl =
 my $PAYLOAD = [];
 Mojo::IOLoop->recurring(10 => sub {
    if(scalar @$PAYLOAD){
-      $geras->publish($PAYLOAD);   
-      $PAYLOAD = [] 
-         if(not $geras->error);
+	   $geras->publish($PAYLOAD);   
+      $PAYLOAD = [];
    }
 });
 

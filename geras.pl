@@ -8,6 +8,8 @@ my $geras = Geras::Api->new({
    host   => 'geras.1248.io',
 });
 
+#$geras->clearCache();
+
 # Publish
 #dum( $geras->publish('/sensors/155/power', 4444) );
 #dum( $geras->publish(
@@ -20,7 +22,7 @@ my $geras = Geras::Api->new({
 #
 ## Series
 #dum( $geras->series() );
-dum( $geras->series_unique(1) );
+#dum( $geras->series_unique(1) );
 #dum( $geras->series('155') );
 #dum( $geras->lastvalue('/sensors/155/power') );
 #dum( $geras->rollup('/sensors/155/power','min','1d') );
@@ -30,9 +32,31 @@ dum( $geras->series_unique(1) );
 ## Shares
 #dum( $geras->shares() );
 #dum( $geras->shares('writeonly') );
-# dum( $geras->series_delete('/sensors/152/power') );
-# dum( $geras->share_delete('/d123p432/myshare') );
+#dum( $geras->series_delete('/sensors/152/power') );
+#dum( $geras->share_delete('/d123p432/myshare') );
+
+# Groups
+dum( $geras->groups_new('groupname', ['/sensors/155/power', '/sensors/155/0']) );
+dum( $geras->groups_new('groupname_second', []) );
+dum( $geras->groups() );
+#dum( $geras->groups('groupname') );
+#dum( $geras->groups_delete('groupname') );
+
+# Funtions
+printf "Add series: 152 to groupname\n";
+dum( $geras->series_add_to_group(152, 'groupname' ) );
+dum( $geras->groups() );
+printf "Move series: 152 to groupname_second\n";
+dum( $geras->series_move_to_group(152, 'groupname_second' ) );
+dum( $geras->groups() );
+printf "Remove series: 152 from groupname_second\n";
+dum( $geras->series_remove_from_group(152, 'groupname_second' ) );
+dum( $geras->groups() );
+printf "Remove all groups\n";
+dum( $geras->groups_delete('groupname') );
+dum( $geras->groups_delete('groupname_second') );
+dum( $geras->groups() );
 
 
-
+   
 exit;
