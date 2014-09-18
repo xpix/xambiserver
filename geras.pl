@@ -11,14 +11,18 @@ my $geras = Geras::Api->new({
 #$geras->clearCache();
 
 # Publish
-#dum( $geras->publish('/sensors/155/power', 4444) );
-#dum( $geras->publish(
-#   [
-#      { '/sensors/155/0' => 5555 },
-#      { '/sensors/155/1' => 6666 },
-#   ]
-#   ) 
-#);
+dum( $geras->publish('/sensors/155/power', 4444) );
+dum( $geras->publish(
+   [
+      { '/sensors/155/0' => 5555 },
+      { '/sensors/155/1' => 6666 },
+   ]
+   ) 
+);
+sleep 1;
+
+dum( $geras->fetchdata );
+
 #
 ## Series
 #dum( $geras->series() );
@@ -36,26 +40,26 @@ my $geras = Geras::Api->new({
 #dum( $geras->share_delete('/d123p432/myshare') );
 
 # Groups
-dum( $geras->groups_new('groupname', ['/sensors/155/power', '/sensors/155/0']) );
-dum( $geras->groups_new('groupname_second', []) );
-dum( $geras->groups() );
+#dum( $geras->groups_new('groupname', ['/sensors/155/power', '/sensors/155/0']) );
+#dum( $geras->groups_new('groupname_second', []) );
+#dum( $geras->groups() );
 #dum( $geras->groups('groupname') );
 #dum( $geras->groups_delete('groupname') );
 
 # Funtions
-printf "Add series: 152 to groupname\n";
-dum( $geras->series_add_to_group(152, 'groupname' ) );
-dum( $geras->groups() );
-printf "Move series: 152 to groupname_second\n";
-dum( $geras->series_move_to_group(152, 'groupname_second' ) );
-dum( $geras->groups() );
-printf "Remove series: 152 from groupname_second\n";
-dum( $geras->series_remove_from_group(152, 'groupname_second' ) );
-dum( $geras->groups() );
-printf "Remove all groups\n";
-dum( $geras->groups_delete('groupname') );
-dum( $geras->groups_delete('groupname_second') );
-dum( $geras->groups() );
+#printf "Add series: 152 to groupname\n";
+#dum( $geras->series_add_to_group(152, 'groupname' ) );
+#dum( $geras->groups() );
+#printf "Move series: 152 to groupname_second\n";
+#dum( $geras->series_move_to_group(152, 'groupname_second' ) );
+#dum( $geras->groups() );
+#printf "Remove series: 152 from groupname_second\n";
+#dum( $geras->series_remove_from_group(152, 'groupname_second' ) );
+#dum( $geras->groups() );
+#printf "Remove all groups\n";
+#dum( $geras->groups_delete('groupname') );
+#dum( $geras->groups_delete('groupname_second') );
+#dum( $geras->groups() );
 
 
    

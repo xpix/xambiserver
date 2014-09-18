@@ -6,7 +6,7 @@ use strict;
 use LWP::UserAgent;
 use JSON::XS;
 use Cache::File;
-use AnyEvent::MQTT;
+use IPC::ShareLite qw( :lock );
 
 use Data::Dumper;
 sub dum { printf "DEBUG: %s\n", Dumper(@_); };
@@ -50,13 +50,11 @@ sub new {
       cache_root => '/tmp/GERASCACHE'
    );
 
-   $self->{'mqtt'} =
-      AnyEvent::MQTT->new(
-         host     => $self->{'host'}, 
-         user     => '',
-         password => $self->{apikey},
-         on_error => $self->error
-      );
+   $self->{'share'} = IPC::ShareLite->new(
+        -key     => 'mqtt',
+        -create  => 'yes',
+        -destroy => 'no'
+    ) or die $!;
 
    return $self;
 }
@@ -88,16 +86,48 @@ sub publish {
       $serie = [{$serie => $value}];
    }
 
+   my $share = [];
+
    foreach my $entry (@$serie){
       my($topic, $value) = each %$entry;
-      my $condvar = 
-         $obj->{'mqtt'}->publish(
-            topic    => $topic,
-            message  => $value,
-         );
-      $condvar->recv;
+
+      # Save in shared Memory for web process
+      push(@$share, {
+         topic => $topic,
+         when  => time,
+         value => $value,
+      });
+
+      # ok, ugly solution but it works :)
+      my $erg = `/usr/bin/mosquitto_pub -u "" -P "$obj->{apikey}" -h $obj->{host} -t $topic -m "$value"; echo \$?`;
+      chomp $erg;
+      warn "Call failed for topic: $topic with value: $value" if($erg != 0);
    }
+
+   $obj->{share}->lock( LOCK_EX|LOCK_NB );
+   $obj->{share}->store(encode_json($share));
+   $obj->{share}->unlock();
+
    return 1;
+}
+
+#-------------------------------------------------------------------------------
+sub fetchdata {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || die "No Object!";
+
+   # get shared Memory for web process
+   my $string = $obj->{share}->fetch;
+
+   # remove old data cuz one read are atomar
+   # to prevent fetch same data twice time
+   if($string){
+      $obj->{share}->lock( LOCK_EX|LOCK_NB );
+      $obj->{share}->store('');
+      $obj->{share}->unlock();
+      return decode_json( $string );
+   }
+   return 0;
 }
 
 
