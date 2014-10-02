@@ -141,6 +141,25 @@ sub series {
 }
 
 #-------------------------------------------------------------------------------
+sub series_group {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $serietag = shift || die "No Serie";
+
+   my $GroupName = '';
+   my $allGroups = $obj->groups();
+   foreach my $groupName (sort keys %$allGroups){
+      foreach my $groupValue (@{$allGroups->{$groupName}}){
+         if($groupValue =~ /\/$serietag\//){
+            $GroupName = $groupName;
+         }
+      }
+   }
+
+   return $GroupName || 'unknowngroup';
+}
+
+#-------------------------------------------------------------------------------
 sub series_unique {
 #-------------------------------------------------------------------------------
    my $obj = shift || die "No Object!";
@@ -218,7 +237,7 @@ sub series_remove_from_group {
 sub series_move_to_group {
 #-------------------------------------------------------------------------------
    my $obj = shift || die "No Object!";
-   my $serietag =shift || die "No Serie to delete!";
+   my $serietag =shift || die "No Serietag to delete!";
    my $group =shift || die "No Serie to delete!";
 
    my ($serie) = $obj->series($serietag)
@@ -228,18 +247,10 @@ sub series_move_to_group {
       or return $obj->error("Can't find group $group!");
 
    # Try to find serie in an old group ..   
-   my $sourceGroupName = '';
-   my $allGroups = $obj->groups();
-   foreach my $groupName (sort keys %$allGroups){
-      foreach my $groupValue (@{$allGroups->{$groupName}}){
-         if($groupValue =~ /\/$serietag\//){
-            $sourceGroupName = $groupName;
-         }
-      }
-   }
+   my $sourceGroupName = $obj->series_group($serietag);
+
    # remove from old group ...
    if($sourceGroupName){
-dum($sourceGroupName);
       $obj->series_remove_from_group($serietag, $sourceGroupName);
    }
    # ... and add to new group

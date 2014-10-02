@@ -9,6 +9,7 @@ sub dum { warn Dumper(@_)};
 use Mojolicious::Lite;
 use Mojo::IOLoop;
 use Geras::Api;
+use XHome::Sensor;
 
 # Geras MQTT API
 dum( "Init Geras ... " );
