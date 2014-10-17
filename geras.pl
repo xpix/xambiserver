@@ -11,22 +11,23 @@ my $geras = Geras::Api->new({
 #$geras->clearCache();
 
 # Publish
-dum( $geras->publish('/sensors/155/power', 4444) );
-dum( $geras->publish(
-   [
-      { '/sensors/155/0' => 5555 },
-      { '/sensors/155/1' => 6666 },
-   ]
-   ) 
-);
-sleep 1;
+#dum( $geras->publish('/sensors/155/power', 4444) );
+#dum( $geras->publish(
+#   [
+#      { '/sensors/155/0' => 5555 },
+#      { '/sensors/155/1' => 6666 },
+#   ]
+#   ) 
+#);
+#sleep 1;
 
 dum( $geras->fetchdata );
 
 #
 ## Series
 #dum( $geras->series() );
-#dum( $geras->series_unique(1) );
+dum( $geras->series_unique(1) );
+dum( $geras->series_unique(1, '/sensors/xxx') );
 #dum( $geras->series('155') );
 #dum( $geras->lastvalue('/sensors/155/power') );
 #dum( $geras->rollup('/sensors/155/power','min','1d') );

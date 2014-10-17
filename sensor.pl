@@ -18,7 +18,7 @@ my $sensor = XHome::Sensor->new({
 });
 
 #dum( $geras->groups_new('sensorgroup', ['/sensors/155/power', '/sensors/155/0']) );
-dum( $geras->groups );
+#dum( $geras->groups );
 
 
 dum( $sensor->group );

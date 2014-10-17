@@ -4,7 +4,7 @@ use warnings;
 use strict;
 
 use Data::Dumper;
-sub dum { printf "DEBUG: %s\n", Dumper(@_); };
+sub dum { "DEBUG: %s\n", Dumper(@_); };
 
 my $ERRORS;
 #===============================================================================
@@ -50,13 +50,29 @@ sub new {
    bless($self, $class);
 
    # API Data
-   $self->topic( delete $args->{'topic'} || die "No Topic in new!" );
-   $self->when( delete $args->{'when'} || time);
-   $self->value( delete $args->{'value'} || 0 );
-   $self->geras( delete $args->{'geras'} || 0 );
+   $self->topic( delete $args->{'topic'} )   || die "No Topic in new!";
+   $self->when ( delete $args->{'when'}  )   || time;
+   $self->value( delete $args->{'value'} )   || 0;
+   $self->geras( delete $args->{'geras'} )   || 0;
 
    return $self;
 }
+
+#-------------------------------------------------------------------------------
+sub info {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || die "No Object!";
+
+   {
+      type     => $obj->type,
+      topic    => $obj->topic,
+      id       => $obj->id,
+      valueid  => $obj->valueid,
+      last     => $obj->last,
+      when     => $obj->when,
+   };
+}
+
 
 #-------------------------------------------------------------------------------
 sub type {
@@ -82,12 +98,13 @@ sub type {
 sub topic {
 #-------------------------------------------------------------------------------
    my $obj   = shift || die "No Object!";
-   if(defined $_[0]){
-      $obj->{topic} = $_[0];
-      my ($id) = $obj->{topic} =~ /\/(\d+)\//si;
+   if($_[0]){
+      $obj->{topic} = shift;
+      my ($id, $valueid) = $obj->{topic} =~ /\/(\d+)\/(\S+)/si;
       die "Problem to read topic: ".$obj->{topic}
          unless($id);
       $obj->id($id);
+      $obj->valueid($valueid);
    }
    return $obj->{topic};
 }
@@ -108,6 +125,14 @@ sub now {
 }
 
 #-------------------------------------------------------------------------------
+sub last {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || die "No Object!";
+   $obj->when(time);
+   return $obj->geras->lastvalue( $obj->topic );
+}
+
+#-------------------------------------------------------------------------------
 sub when {
 #-------------------------------------------------------------------------------
    my $obj   = shift || die "No Object!";
@@ -121,6 +146,14 @@ sub id {
    my $obj   = shift || die "No Object!";
    $obj->{id} = $_[0] if(defined $_[0]);
    return $obj->{id};
+}
+
+#-------------------------------------------------------------------------------
+sub valueid {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || die "No Object!";
+   $obj->{valueid} = $_[0] if(defined $_[0]);
+   return $obj->{valueid};
 }
 
 #-------------------------------------------------------------------------------

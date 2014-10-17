@@ -141,6 +141,16 @@ sub series {
 }
 
 #-------------------------------------------------------------------------------
+sub series_id {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $serie   =shift || return '';
+
+   my @tokens = split(/\//, $serie);
+   return $tokens[1];
+}
+
+#-------------------------------------------------------------------------------
 sub series_group {
 #-------------------------------------------------------------------------------
    my $obj = shift || die "No Object!";
@@ -164,11 +174,19 @@ sub series_unique {
 #-------------------------------------------------------------------------------
    my $obj = shift || die "No Object!";
    my $topic = shift || 0;
+   my $full = shift || 0;
    
    my $entrys = {};
    foreach my $serie (@{$obj->series}){
       my @tokens = split(/\//, $serie);
-      $entrys->{$tokens[$topic+1]} = 1;
+      if($full){
+         pop(@tokens);
+         $entrys->{join('/', @tokens)} = 1;
+      }
+      else {
+         $entrys->{$tokens[$topic+1]} = 1;
+      }
+
    }
 
    return [sort keys %$entrys];
@@ -262,9 +280,31 @@ sub groups {
 #-------------------------------------------------------------------------------
    my $obj = shift || die "No Object!";
    my $only = shift || '';
-   
-   $obj->_getJSON('/group', $only);
+
+   my $grouped = {};
+   my $return = $obj->_getJSON('/group', $only);
+   foreach my $group (keys %$return){
+      map { $grouped->{$_} = 1 } @{$return->{$group}};
+   }
+
+   $return->{'/group/aaaa/unknown'} = [];
+   foreach my $serie (@{$obj->series()}){
+      push(@{$return->{'/group/aaaa/unknown'}}, $serie)
+         if(not exists $grouped->{$serie});
+   }
+   return $return;
 }
+
+#-------------------------------------------------------------------------------
+sub group_name {
+#-------------------------------------------------------------------------------
+   my $obj = shift || die "No Object!";
+   my $group   =shift || return '';
+
+   my @tokens = split(/\//, $group);
+   return $tokens[-1];
+}
+
 
 #-------------------------------------------------------------------------------
 sub groups_new {
@@ -355,9 +395,8 @@ sub lastvalue {
 #-------------------------------------------------------------------------------
    my $obj = shift || die "No Object!";
    my $serie=shift || die "No Serie!";
-   my $only = shift || '';
    
-   $obj->_getJSON('/now/'.$serie);
+   values %{$obj->_makeHash($obj->_getJSON('/now'.$serie))};
 }
 
 
@@ -414,7 +453,6 @@ sub _getJSON {
       if(ref $only);
    
    $url = sprintf('http://%s%s', $obj->{host}, $url);
-   warn "$type: $url";
    my $json;
    
    # Cached results?
@@ -423,6 +461,7 @@ sub _getJSON {
       $json = decode_json($cached);
    }
    else {
+      warn "$type: $url";
       my $ua = LWP::UserAgent->new();
       my $req = HTTP::Request->new($type, $url);
       $req->authorization_basic($obj->{apikey}, '');
@@ -435,6 +474,7 @@ sub _getJSON {
       my $res = $ua->request($req);
       if($res->is_success){
          my $content = $res->content;
+         warn "Content: $content";
          $obj->{cache}->set($url, $content)
             if($type eq 'GET');
          $json = eval{ decode_json($content) } || $json;
@@ -451,7 +491,7 @@ sub _getJSON {
       my $return = {};
       foreach my $key (keys %$json){
          $return->{$key} = $json->{$key}
-            if($key eq $only or $key =~ /\/$only$/i or $key =~ /$only\//i);
+            if(not $only or ($key eq $only or $key =~ /\/$only$/i or $key =~ /$only\//i));
       }
       return $return;
    }
