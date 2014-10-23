@@ -5,11 +5,21 @@ use strict;
 
 use LWP::UserAgent;
 use JSON::XS;
-use Cache::File;
+use URI::Escape;
 use IPC::ShareLite qw( :lock );
+use Cache::Memory;
+use Cache::File;
 
 use Data::Dumper;
 sub dum { printf "DEBUG: %s\n", Dumper(@_); };
+
+my $timeWindow = {
+   s => 1, # second
+   m => 60, # minute
+   h => 3600, # hour
+   d => 24 * 3600, # day
+   w => 7 * 24 * 3600, # week
+};
 
 my $ERRORS;
 #===============================================================================
@@ -46,9 +56,10 @@ sub new {
    $self->{'apikey'}  = delete $args->{'apikey'} || die "No Apikey in new!";
    $self->{'host'}    = delete $args->{'host'}   || 'geras.1248.io';
 
-   $self->{'cache'}   = Cache::File->new( 
-      cache_root => '/tmp/GERASCACHE'
-   );
+   $self->{'cache'}   = Cache::Memory->new();
+   $self->{'cache'}   = Cache::File->new(
+      cache_root => '/tmp/GERASCACHE',
+      default_expires => '600 sec' );
 
    $self->{'share'} = IPC::ShareLite->new(
         -key     => 'mqtt',
@@ -373,20 +384,37 @@ sub rollup {
       if(not grep(/^$rollup$/i, @$possibleRollup));
 
    my $url = sprintf('/series%s?rollup=%s&interval=%s', $serie, $rollup, $interval);
+   $url = sprintf('/series?pattern=%s&rollup=%s&interval=%s', uri_escape($serie), $rollup, $interval)
+      if($serie =~ /\+$/);
 
    $obj->_getJSON($url);
 }
 
+
+# dum( $geras->timewindow('/sensors/155/power','30s') );# 30sec
+# dum( $geras->timewindow('/sensors/155/power','1m') );# 1min
+# dum( $geras->timewindow('/sensors/155/power','1h') );# 1hour
+# dum( $geras->timewindow('/sensors/155/power',undef,1410338021,1410338081) );# 1min
 #-------------------------------------------------------------------------------
 sub timewindow {
 #-------------------------------------------------------------------------------
    my $obj     =shift || die "No Object!";
    my $serie   =shift || die "No Serie!";
-   my $start   =shift || die "No Starttime in seconds since epoch";
-   my $end     =shift || die "No Endtime in seconds since epoch";
+   my $zeit    =shift || '';
+   my $start   =shift || 0;
+   my $end     =shift || 0;
+   if($zeit){
+      my ($count, $type) = $zeit =~ /^(\d+)([smhdw]+)$/;
+      die "Can't read $zeit with type: $type in timewindow!!" 
+         if(not exists $timeWindow->{lc $type});
+      $start = time - ($count * $timeWindow->{lc $type});
+   }
 
-   my $url = sprintf('/series%s?start=%s&end=%s', $serie, $start, $end);
-   
+   my $url = sprintf('/series%s?start=%s', uri_escape($serie), $start);
+   $url = sprintf('/series?pattern=%s&start=%s', uri_escape($serie), $start)
+      if($serie =~ /\+$/);
+   $url .= sprintf('&end=%d', $end) if($end);
+
    $obj->_getJSON($url);
 }
 

@@ -8,6 +8,8 @@ my $geras = Geras::Api->new({
    host   => 'geras.1248.io',
 });
 
+$ENV{CONFIGFILE} = 'xambiserver/cfg/sensors.cfg';
+
 #$geras->clearCache();
 
 # Publish
@@ -21,18 +23,20 @@ my $geras = Geras::Api->new({
 #);
 #sleep 1;
 
-dum( $geras->fetchdata );
 
 #
 ## Series
 #dum( $geras->series() );
-dum( $geras->series_unique(1) );
-dum( $geras->series_unique(1, '/sensors/xxx') );
+#dum( $geras->series_unique(1) );
+#dum( $geras->series_unique(1, '/sensors/xxx') );
 #dum( $geras->series('155') );
 #dum( $geras->lastvalue('/sensors/155/power') );
 #dum( $geras->rollup('/sensors/155/power','min','1d') );
 #dum( $geras->rollup('/sensors/155/power','max','1d') );
 #dum( $geras->timewindow('/sensors/155/power',1410338021,1410338081) );# 1min
+#dum( $geras->timewindow('/sensors/155/power','30s') );# 30sec
+#dum( $geras->timewindow('/sensors/155/power','1m') );# 1min
+
 #
 ## Shares
 #dum( $geras->shares() );
@@ -43,9 +47,10 @@ dum( $geras->series_unique(1, '/sensors/xxx') );
 # Groups
 #dum( $geras->groups_new('groupname', ['/sensors/155/power', '/sensors/155/0']) );
 #dum( $geras->groups_new('groupname_second', []) );
-#dum( $geras->groups() );
+dum( $geras->groups() );
 #dum( $geras->groups('groupname') );
-#dum( $geras->groups_delete('groupname') );
+#dum( $geras->groups_delete('sensorgroup') );
+#dum( $geras->groups() );
 
 # Funtions
 #printf "Add series: 152 to groupname\n";

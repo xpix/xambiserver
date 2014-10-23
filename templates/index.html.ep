@@ -1,125 +1,100 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <head>
-     <meta charset="utf-8">
-     <title>XAmbiServer - HomeMon</title>
-      <link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
-      <script src="//code.jquery.com/jquery-1.10.2.js"></script>
-      <script src="//code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
-      <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-      <style>
-        #toolbar {
-          padding: 4px;
-          display: inline-block;
-        }
-        /* support: IE7 */
-        *+html #toolbar {
-          display: inline;
-        }
-      </style>
+<head>
+    <title></title>
 
-      <script type="text/javascript">
-         google.load("visualization", "1", {packages:["gauge"]});
-       </script>
+    <!-- Ignite UI Required Combined CSS Files -->
+    <link href="http://cdn-na.infragistics.com/igniteui/2014.2/latest/css/themes/infragistics/infragistics.theme.css" rel="stylesheet" />
+    <link href="http://cdn-na.infragistics.com/igniteui/2014.2/latest/css/structure/infragistics.css" rel="stylesheet" />
 
+   <!--CSS file specific for chart styling -->
+    <link href="http://cdn-na.infragistics.com/igniteui/2014.2/latest/css/structure/modules/infragistics.ui.chart.css" rel="stylesheet" />
 
-      <script>
-      $(function() {
+    <script src="http://modernizr.com/downloads/modernizr-latest.js"></script>
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"></script>
 
-         $( "#addgroup" ).button({
-               icons: {
-                 primary: "ui-icon-locked"
-               },
-             });
-         $( "#help" ).button({
-               icons: {
-                 primary: "ui-icon-gear"
-               },
-               text: false
-             });
+    <!-- Ignite UI Required Combined JavaScript Files -->
+    <script src="http://cdn-na.infragistics.com/igniteui/2014.2/latest/js/infragistics.core.js"></script>
+    <script src="http://cdn-na.infragistics.com/igniteui/2014.2/latest/js/infragistics.dv.js"></script>
+ 
+</head>
+<body>      
+    <div style="width:100%; height:300px" >
+        <div id="bulletgraph" />
+    </div>  
 
-         var tabs = $( "#Rooms" ).tabs();
-         var tabCounter = 1;
-      
-         // get all exists groups via Ajax
-         $.getJSON( '<%= url_for 'geras' %>?sub=groups', function( data ) {
-            var d = data.groups;
-            for (var group in data.groups) {
-               addTab( group, data.groups[group]);            
-            }
-          });
-      
-         function addTab(group, series) {
-            var groupname = group.split("/");
-            var label = groupname[groupname.length-1].ucfirst();
-            var id = "tabs-" + tabCounter;
-            var li = "<li><a href='#" + id + "'>" + label + "</a><span class='ui-icon ui-icon-close' role='presentation'>Remove Tab</span></li>";
-       
-            tabs.find( ".ui-tabs-nav" ).append( li );
-            tabs.append( "<div id='" + id + "'><p>" + series.join('<br>') + "</p></div>" );
-            tabs.tabs( "refresh" );
-            tabCounter++;
+    <script type="text/javascript">
 
-            addTabContent(id, series);
-         }  
+        $(function () {
 
-         function addTabContent(divid, series) {
-            for(var i=0;i<series.length;i++){
-               $.getJSON( '<%= url_for 'sensor' %>?sub=type&topic=' + series[i], function( data ) {
-                  // Call correct Widget and draw
-                  if(data.type && data.topic){
-                     var evalStr = "createWidget_" + data.type + "('" + data.topic + "', '" + divid + "')";
-                     console.log(evalStr);
-                     eval(evalStr);
-                  }
-               });
-            }
-         }
+            var $bulletGraph = $("#bulletgraph");
 
+            $bulletGraph.igBulletGraph({
+                height: "300px",
+                width: "60px",
+                orientation: "vertical", 
+                value: 85,
+                targetValue: 77,
+                ranges: [
+                    {
+                        name: 'bad',
+                        startValue: 0,
+                        endValue: 33
+                    },
+                    {
+                        name: 'acceptable',
+                        startValue: 33,
+                        endValue: 70
+                    },
+                    {
+                        name: 'good',
+                        startValue: 70,
+                        endValue: 100
+                    }],
+                transitionDuration: 200, 
+            });
 
-         /* --------------- WIDGETS -------------------*/
-         function createWidget_Humidity(serie, divid){
-            //create google Gauge and get
-            
-            // Anzeigen der Werte Power Temperatur und Feuchtigkeit in Einem Widget
+            // Orientation
+            $("#orientationButton").click(function () {
+                var orientation = $bulletGraph.igBulletGraph("option", "orientation") == "vertical" ? "horizontal" : "vertical";
+                $bulletGraph.igBulletGraph("option", "orientation", orientation);
 
-            var data = google.visualization.arrayToDataTable([
-             ['Label', 'Value'],
-             ['Humidity', 0],
-            ]);
-            
-            var options = {
-             width: 400, height: 120,
-             redFrom: 0, redTo: 25,
-             yellowFrom:25, yellowTo: 75,
-             blueFrom:75, blueTo: 100,
-             minorTicks: 5
-            };
-            
-            var chart = new google.visualization.Gauge(document.getElementById(divid));
-            
-            chart.draw(data, options);
-         }
+                if (orientation == "horizontal") {
+                    $bulletGraph.igBulletGraph("option", "width", "100%");
+                    $bulletGraph.igBulletGraph("option", "height", 60);
+                }
+                else {
+                    $bulletGraph.igBulletGraph("option", "width", 60);
+                    $bulletGraph.igBulletGraph("option", "height", 300);
+                }
+                
+                $("#orientationButton").text(orientation == "horizontal" ? "Vertical" : "Horizontal");
+            });
 
-
-         /* --------------- PROTOTYPES ----------------*/
-         String.prototype.ucfirst = function()
-         {
-             return this.charAt(0).toUpperCase() + this.substr(1);
-         }
-
-      });
-      </script>
-    </head>
-<body style='font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif";font-size: 62.5%;'>
-
-<div id="toolbar" class="ui-widget-header ui-corner-all">
-  <button id="addgroup">Add group</button>
-  <button id="help">?</button>
-</div>
+            // Scale Inversion
+            $("#isScaleInvertedCheckBox").click(function () {
+                $bulletGraph.igBulletGraph("option", "isScaleInverted", $(this).is(":checked"));
+            });
+        });
+    </script>
     
-<div id="Rooms"><ul></ul></div>
-
+    <fieldset id="graphOptions" style="margin-top: 30px">
+        <legend>Options</legend>
+        <table>
+            <tr>
+                <td>Orientation</td>
+                <td>
+                    <button id="orientationButton" style="width: 100px; margin: 12px 40px 12px 12px">Horizontal</button>
+                </td>
+                <td>
+                    Is Scale Inverted
+                </td>
+                <td>
+                    <input type="checkbox" id="isScaleInvertedCheckBox" style="width: 100px; margin: 12px" />
+                </td>
+            </tr>
+        </table>
+    </fieldset>
 </body>
 </html>
-

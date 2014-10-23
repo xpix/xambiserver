@@ -3,6 +3,9 @@ package XHome::Sensor;
 use warnings;
 use strict;
 
+use Config::General;
+
+
 use Data::Dumper;
 sub dum { "DEBUG: %s\n", Dumper(@_); };
 
@@ -54,8 +57,44 @@ sub new {
    $self->when ( delete $args->{'when'}  )   || time;
    $self->value( delete $args->{'value'} )   || 0;
    $self->geras( delete $args->{'geras'} )   || 0;
+   $self->cfg(   delete $args->{'configfile'} || $ENV{CONFIGFILE} ) || die "Can't read config!";
 
    return $self;
+}
+
+sub display { my $obj = shift; $obj->cfg->{display}{$obj->name} };
+sub divider { my $obj = shift; $obj->display->{divider} };
+sub name    { my $obj = shift; $obj->config->{ValNames}->[$obj->idx] };
+
+#-------------------------------------------------------------------------------
+sub cfg {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || die "No Object!";
+   my $file  = shift || return $obj->{cfg};
+
+   if($file){
+      my $conf = Config::General->new($file);
+      my %config = $conf->getall;
+      $obj->{cfg} = \%config;
+   }
+
+   return $obj->{cfg};
+}
+
+#-------------------------------------------------------------------------------
+sub config {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || die "No Object!";
+   return $obj->cfg->{sensor}->{$obj->type};
+}
+
+# /sensors/315/power = 0; ../315/0 = 1 ... 
+#-------------------------------------------------------------------------------
+sub idx {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || die "No Object!";
+   my $lastChar = substr(lc $obj->valueid, -1); # /r or 0 or 1 or 2 ...
+   return ($lastChar eq 'r' ? 0 : int($lastChar)+1);   
 }
 
 #-------------------------------------------------------------------------------
@@ -70,6 +109,10 @@ sub info {
       valueid  => $obj->valueid,
       last     => $obj->last,
       when     => $obj->when,
+      nidx     => $obj->idx,
+      name     => $obj->name,
+      config   => $obj->config,
+      display  => $obj->display,
    };
 }
 
@@ -80,13 +123,11 @@ sub type {
    my $obj   = shift || die "No Object!";
    my $id    = shift || $obj->{id} || die "No Id found!";
 
-   $obj->{_cachedTxt} = `cat cfg/sensortypes.cfg`
-      unless(defined $obj->{_cachedTxt});
+   my $sensortypes = $obj->cfg->{sensor};
 
-   my $sensortypes = eval( '{'.$obj->{_cachedTxt}.'}' );
    foreach my $typename (keys %$sensortypes){
       my $sector = $sensortypes->{$typename};
-      if($id >= $sector->[0] and $id <= $sector->[1]){
+      if($id >= $sector->{startNodeId} and $id <= $sector->{endNodeId}){
          return $typename;
       }
    }
@@ -137,6 +178,8 @@ sub when {
 #-------------------------------------------------------------------------------
    my $obj   = shift || die "No Object!";
    $obj->{when} = $_[0] if(defined $_[0]);
+   $obj->geras->lastvalue( $obj->topic )
+      if($obj->geras and not defined $obj->{when});
    return $obj->{when};
 }
 
