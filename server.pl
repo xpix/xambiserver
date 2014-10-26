@@ -112,7 +112,7 @@ Mojo::IOLoop->recurring(1 => sub {
    $EVENTS = [];
 });
 
-get '/' => sub {
+get '/demo' => sub {
    my $c = shift;
    
    # Fill Stash ...
@@ -122,7 +122,7 @@ get '/' => sub {
    $c->render(template => 'index');
 };
 
-get '/demo' => sub {
+get '/' => sub {
    my $c = shift;
 
    my $conf = Config::General->new($ENV{CONFIGFILE});

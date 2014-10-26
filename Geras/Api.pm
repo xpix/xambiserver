@@ -56,7 +56,7 @@ sub new {
    $self->{'apikey'}  = delete $args->{'apikey'} || die "No Apikey in new!";
    $self->{'host'}    = delete $args->{'host'}   || 'geras.1248.io';
 
-   $self->{'cache'}   = Cache::Memory->new();
+   # $self->{'cache'}   = Cache::Memory->new();
    $self->{'cache'}   = Cache::File->new(
       cache_root => '/tmp/GERASCACHE',
       default_expires => '600 sec' );

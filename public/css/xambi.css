@@ -1,0 +1,102 @@
+.ui-widget{
+   font-size:0.9em
+}
+
+.dashboard {
+   position: relative;
+   width: 95%;
+   height: 800px;
+}
+
+#dashboard h4 {
+   font-size: 18px;
+   text-align: center;
+}
+
+#dashboard h3 {
+   text-align: center;
+}
+
+#dashboard img {
+   width: 150px;
+   height: 175px;
+   margin-left: -75px;
+   margin-top: 15px;
+   position: absolute;
+   left: 50%;
+}
+
+#dashboard .ui-igtile-maximized img {
+   width: 200px;
+   height: 250px;
+   position: static;
+   float: left;
+   margin: 20px 20px 20px 0;
+}
+
+#dashboard .ui-igtilemanager-right img {
+   width: 60px;
+   height: 80px;
+   margin-left: -30px;
+   margin-top: 15px;
+}
+
+.ui-igtile-maximized .text {
+   margin-top: 20px;
+   margin-bottom: 20px;
+}
+
+.ui-igtile-maximized div {
+   text-align: left;
+}
+
+.linkedIn, .skills {
+   word-wrap: break-word;
+}
+
+.optionContainer {
+   float:left;
+   border: 1px solid lightgray;
+   margin: 5px 5px 5px 0;
+   padding: 5px;
+}
+
+#dashboard .color {
+   color: blue;
+}
+
+.tooltip { margin: 0px 5px 0px 5px; }
+#legend, #legend2 { margin: 0px 5px 5px 5px; }
+#legends, #chart { float: left; }
+#chartTitle { width: 500px; text-align: center; }
+
+/* Start by setting display:none to make this hidden.
+   Then we position it in relation to the viewport window
+   with position:fixed. Width, height, top and left speak
+   speak for themselves. Background we set to 80% white with
+   our animation centered, and no-repeating */
+.modal {
+    display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        0;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba( 255, 255, 255, .8 ) 
+                url('/images/ajax-loader.gif') 
+                50% 50% 
+                no-repeat;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+body.loading {
+    overflow: hidden;   
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+body.loading .modal {
+    display: block;
+}

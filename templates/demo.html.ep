@@ -9,6 +9,9 @@
     <!--CSS file specific for chart styling -->
     <link href="http://cdn-na.infragistics.com/igniteui/2014.2/latest/css/structure/modules/infragistics.ui.chart.css" rel="stylesheet" />
 
+    <!-- Xambi css -->
+    <link href="/css/xambi.css" rel="stylesheet" />
+
 
     <!-- Modernizr/jQuery/jQuery UI -->
     <script src="http://modernizr.com/downloads/modernizr-latest.js"></script>
@@ -25,78 +28,20 @@
 
 </head>
 <body>
-    <style type="text/css">
-        .ui-widget{
-            font-size:0.9em
-         }
 
-        .dashboard {
-            position: relative;
-            width: 95%;
-            height: 800px;
-        }
-
-        #dashboard h4 {
-            font-size: 18px;
-            text-align: center;
-        }
-
-        #dashboard h3 {
-            text-align: center;
-        }
-
-        #dashboard img {
-            width: 150px;
-            height: 175px;
-            margin-left: -75px;
-            margin-top: 15px;
-            position: absolute;
-            left: 50%;
-        }
-
-        #dashboard .ui-igtile-maximized img {
-            width: 200px;
-            height: 250px;
-            position: static;
-            float: left;
-            margin: 20px 20px 20px 0;
-        }
-
-        #dashboard .ui-igtilemanager-right img {
-            width: 60px;
-            height: 80px;
-            margin-left: -30px;
-            margin-top: 15px;
-        }
-
-        .ui-igtile-maximized .text {
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
-
-        .ui-igtile-maximized div {
-            text-align: left;
-        }
-
-        .linkedIn, .skills {
-            word-wrap: break-word;
-        }
-
-        #dashboard .color {
-            color: blue;
-        }
-
-        .tooltip { margin: 0px 5px 0px 5px; }
-        #legend, #legend2 { margin: 0px 5px 5px 5px; }
-        #legends, #chart { float: left; }
-        #chartTitle { width: 500px; text-align: center; }
-    </style>
-    
     <div id="tabs"><ul></ul></div>
-    
 
     <script type="text/javascript">
         var config = <%== $config %>;
+
+        var $body = $("body");
+         
+        $(document).on({
+             ajaxStart: function() { $body.addClass("loading");    },
+              ajaxStop: function() { $body.removeClass("loading"); }    
+        });
+
+
         $(function () {
             /* --------------- VARS ----------------*/
             var tabCounter = 2;
@@ -162,17 +107,34 @@
       <div style="width: 95%; min-width: 210px;">
          <div id="chart-${sensor}"></div>
       </div>
-      <div id="legends" style="position:absolute;top:5px;right:5px">
+      <img src="images/${info.config.Image}" style="position:absolute;top:10px;left:5px;">
+      <div id="legends" style="position:absolute;top:10px;right:10px">
         <div id="legend"></div>
         <div id="legend2"></div>
       </div>
 
-      <script id="tooltip-Power" type="text/x-jquery-tmpl">
-          <span id = "tooltipValue" class="tooltip">Power: ${item.Power}</span>
-      </script>
-      <script id="tooltip-Temperature" type="text/x-jquery-tmpl">
-          <span id = "tooltipValue" class="tooltip">Temperature:${item.Value0}</span>
-      </script>
+      <div class="optionContainer">
+          Interval
+          <br />
+          <select id="select-interval" class="selectBounds">
+              <option value="1m">Minute</option>
+              <option value="1h" selected="selected">Houre</option>
+              <option value="1d">Day</option>
+              <option value="1w">Week</option>
+          </select>
+      </div>
+
+      <div class="optionContainer">
+          Rollup
+          <br />
+          <select id="select-rollup" class="selectBounds">
+              <option value="avg" selected="selected">Average</option>
+              <option value="sum">Sum</option>
+              <option value="max">Max</option>
+              <option value="min">Min</option>
+          </select>
+      </div>
+
 
       <script type="text/javascript">
          $(function () {
@@ -180,10 +142,21 @@
             var rollup = 'avg';
             var interval = '1d';
 
-            var dsChart = new $.ig.DataSource({ 
+            dsChart = new $.ig.DataSource({ 
                type: "json", 
                dataSource: '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval,
             }).dataBind();
+
+            $('.selectBounds').on({
+                change: function (e) {
+                    var interval = $('#select-interval').val();
+                    var rollup   = $('#select-rollup').val();
+                    var dgurl = '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval + '&foo=1';
+                    dsChart = new $.ig.DataSource({type: 'json', dataSource: dgurl,}).dataBind();
+                    $("#chart-${sensor}").igDataChart( "option", "dataSource", dsChart);
+                }
+            });
+
 
             var possibleValues = "${info.config.ValNames}".split(',');
             var axes = [{
@@ -220,8 +193,6 @@
                     valueMemberPath: pfad,
                     isHighlightingEnabled: true,
                     isTransitionInEnabled: true,
-                    showTooltip: true,
-                    tooltipTemplate: "tooltip-" + possibleValues[i],
                     legend: { element: "legend" }
                 });
             }
@@ -247,23 +218,25 @@
     
     <textarea id="minimizedState" style="display:none">
        <div style="width:99%; height:120" ><!-- Start Big Div -->  
-      <!-- Temperature display -->
-      {{if ${type} == 'Temperature' }}
-         <img src="images/themometer.png" style="position:absolute;top:5px;left:5px;">
+         <img src="images/${info.config.Image}" style="position:absolute;top:5px;left:5px;">
          <div id="radialGauge-${sensor}" style="float:left"></div>
          <script type="text/javascript">
            $(function () {
+               var display = config.display['${type}'];
+               var vals = [${value.0.last}, ${value.1.last}, ${value.2.last}, ${value.3.last}, ${value.4.last}, ${value.5.last}, ${value.6.last}, ${value.7.last}, ${value.8.last}, ${value.9.last}];
+               var vidx = (typeof display.valueidx == 'undefined' ? 0 : display.valueidx);
+               var calc = parseInt(vals[vidx] / display.divider);
                var data = google.visualization.arrayToDataTable([
                          ['Label', 'Value'],
-                         ['Temperature', ${value.0.last}/100],
+                         ['${type}', calc ],
                        ]);
 
                var options = {
                   width: 120, height: 120,
-                  redFrom: 35, redTo: 50,
-                  yellowFrom:25, yellowTo: 35,
-                  greenFrom:15, greenTo: 25,
-                  min:-30, max:50,
+                  redFrom: display.redFrom, redTo: display.redTo,
+                  yellowFrom:display.yellowFrom, yellowTo: display.yellowTo,
+                  greenFrom:display.greenFrom, greenTo: display.greenTo,
+                  min:display.minimumValue, max:display.maximumValue,
                   minorTicks: 5
                };
 
@@ -271,51 +244,8 @@
                chart.draw(data, options);
          });
          </script>
-      {{elseif ${type} == 'Humidity' }}
-         <img src="images/humidity.png" style="position:absolute;top:5px;left:5px;">
-         <div id="radialGauge-${sensor}" style="float:left"></div>
-         <script type="text/javascript">
-           $(function () {
-               var data = google.visualization.arrayToDataTable([
-                         ['Label', 'Value'],
-                         ['Humidity', ${value.1.last}],
-                       ]);
 
-               var options = {
-                  width: 120, height: 120,
-                  greenFrom:40, greenTo: 60,
-               };
-
-               var chart = new google.visualization.Gauge(document.getElementById('radialGauge-${sensor}'));
-               chart.draw(data, options);
-         });
-         </script>
-      {{elseif ${type} == 'Plant' }}
-         <img src="images/plant14.png" style="position:absolute;top:5px;left:5px;">
-         <div id="radialGauge-${sensor}" style="float:left"></div>
-         <script type="text/javascript">
-           $(function () {
-               var data = google.visualization.arrayToDataTable([
-                         ['Label', 'Value'],
-                         ['Plant', ${value.0.last}],
-                       ]);
-
-               var options = {
-                  width: 120, height: 120,
-                  redFrom: 0, redTo: 200,
-                  yellowFrom:200, yellowTo: 400,
-                  greenFrom:400, greenTo: 600,
-                  min:0, max:600,
-                  minorTicks: 5
-               };
-
-               var chart = new google.visualization.Gauge(document.getElementById('radialGauge-${sensor}'));
-               chart.draw(data, options);
-         });
-         </script>
-      {{/if}}
-
-           <div id="bulletgraph-${sensor}" />
+         <div id="bulletgraph-${sensor}"></div>
       </div><!-- End Big Div -->  
    
        <script type="text/javascript">
@@ -352,5 +282,6 @@
        </script>
     </textarea>
 
+   <div class="modal"></div>
 </body>
 </html>
