@@ -56,10 +56,11 @@ sub new {
    $self->{'apikey'}  = delete $args->{'apikey'} || die "No Apikey in new!";
    $self->{'host'}    = delete $args->{'host'}   || 'geras.1248.io';
 
-   # $self->{'cache'}   = Cache::Memory->new();
+   #$self->{'cache'}   = Cache::Memory->new(
    $self->{'cache'}   = Cache::File->new(
-      cache_root => '/tmp/GERASCACHE',
-      default_expires => '600 sec' );
+      cache_root      => '/tmp/GERASCACHE',
+      default_expires => '3600 sec',
+   );
 
    $self->{'share'} = IPC::ShareLite->new(
         -key     => 'mqtt',
@@ -293,17 +294,27 @@ sub groups {
    my $only = shift || '';
 
    my $grouped = {};
-   my $return = $obj->_getJSON('/group', $only);
+   my $return = $obj->_getJSON('/group');
    foreach my $group (keys %$return){
       map { $grouped->{$_} = 1 } @{$return->{$group}};
    }
 
+   # Add all series to unknown wo group
    $return->{'/group/aaaa/unknown'} = [];
    foreach my $serie (@{$obj->series()}){
       push(@{$return->{'/group/aaaa/unknown'}}, $serie)
          if(not exists $grouped->{$serie});
    }
-   return $return;
+   
+   if($only){
+      foreach my $group (sort keys %$return){
+         return { $group => $return->{$group} }
+            if($group =~ /$only$/i);
+      }
+   }
+   else {
+      return $return;
+   }
 }
 
 #-------------------------------------------------------------------------------
@@ -376,6 +387,8 @@ sub rollup {
    my $serie   =shift || die "No Serie!";
    my $rollup  =shift || die "No Rollup ('min','max','avg','sum')!";
    my $interval=shift || die "No Interval ('s','m','h','d','w','mo','y')!";
+   my $start   =shift || 0;
+   my $end     =shift || 0;
 
    my $possibleRollup = ['min','max','avg','sum'];
    my $possibleInterval = ['s','m','h','d','w','mo','y'];
@@ -387,6 +400,9 @@ sub rollup {
    $url = sprintf('/series?pattern=%s&rollup=%s&interval=%s', uri_escape($serie), $rollup, $interval)
       if($serie =~ /\+$/);
 
+   $url .= '&start='.$start   if($start);
+   $url .= '&end='.$end       if($end);
+dum($url);
    $obj->_getJSON($url);
 }
 
@@ -511,7 +527,6 @@ sub _getJSON {
          die $res->status_line;
       }
    }
-
    if(ref $json eq 'ARRAY'){
       return [grep(/$only\//i, @$json)];
    }

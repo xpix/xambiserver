@@ -1,59 +1,78 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-    <title></title>
-    <!-- Ignite UI Required Combined CSS Files -->
-    <link href="http://cdn-na.infragistics.com/igniteui/2014.2/latest/css/themes/infragistics/infragistics.theme.css" rel="stylesheet" />
-    <link href="http://cdn-na.infragistics.com/igniteui/2014.2/latest/css/structure/infragistics.css" rel="stylesheet" />
+   <head>
+      <title></title>
+      <!-- Ignite UI Required Combined CSS Files -->
+      <link href="http://cdn-na.infragistics.com/igniteui/2014.2/latest/css/themes/infragistics/infragistics.theme.css" rel="stylesheet" />
+      <link href="http://cdn-na.infragistics.com/igniteui/2014.2/latest/css/structure/infragistics.css" rel="stylesheet" />
 
-    <!--CSS file specific for chart styling -->
-    <link href="http://cdn-na.infragistics.com/igniteui/2014.2/latest/css/structure/modules/infragistics.ui.chart.css" rel="stylesheet" />
+      <!--CSS file specific for chart styling -->
+      <link href="http://cdn-na.infragistics.com/igniteui/2014.2/latest/css/structure/modules/infragistics.ui.chart.css" rel="stylesheet" />
 
-    <!-- Xambi css -->
-    <link href="/css/xambi.css" rel="stylesheet" />
+      <!-- Xambi css -->
+      <link href="/css/xambi.css" rel="stylesheet" />
 
-
-    <!-- Modernizr/jQuery/jQuery UI -->
-    <script src="http://modernizr.com/downloads/modernizr-latest.js"></script>
-    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"></script>
-
-    <!-- Ignite UI Required Combined JavaScript Files -->
-    <script src="http://cdn-na.infragistics.com/igniteui/2014.2/latest/js/infragistics.core.js"></script>
-    <script src="http://cdn-na.infragistics.com/igniteui/2014.2/latest/js/infragistics.lob.js"></script>
-    <script src="http://cdn-na.infragistics.com/igniteui/2014.2/latest/js/infragistics.dv.js"></script>
-
-    <!-- Google UI Required Combined JavaScript Files -->
-    <script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1','packages':['gauge']}]}"></script>
-
-</head>
-<body>
-
-    <div id="tabs"><ul></ul></div>
-
-    <script type="text/javascript">
-        var config = <%== $config %>;
-
-        var $body = $("body");
-         
-        $(document).on({
-             ajaxStart: function() { $body.addClass("loading");    },
-              ajaxStop: function() { $body.removeClass("loading"); }    
-        });
+      <!-- Modernizr/jQuery/jQuery UI -->
+      <script src="http://modernizr.com/downloads/modernizr-latest.js"></script>
+      <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+      <script src="http://code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
 
 
-        $(function () {
+      <!-- Ignite UI Required Combined JavaScript Files -->
+      <script src="http://cdn-na.infragistics.com/igniteui/2014.2/latest/js/infragistics.core.js"></script>
+      <script src="http://cdn-na.infragistics.com/igniteui/2014.2/latest/js/infragistics.lob.js"></script>
+      <script src="http://cdn-na.infragistics.com/igniteui/2014.2/latest/js/infragistics.dv.js"></script>
+
+      <!-- Google UI Required Combined JavaScript Files -->
+      <script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1','packages':['gauge']}]}"></script>
+
+      <!-- Jquery DFateTimePicker -->
+      <link rel="stylesheet" type="text/css" href="/css/jquery.datetimepicker.css"/ >
+      <script src="/js/jquery.datetimepicker.js"></script>
+
+   </head>
+   <body>
+
+      <div id="tabs">
+         <ul></ul>
+         <button id="addgrp" style="position:absolute;right:4px;top:5px">Add Group</button>
+      </div>
+
+      <div id="dialog" title="Tab data">
+         <form>
+            <fieldset class="ui-helper-reset">
+               <label for="grpname">Groupname</label>
+               <input type="text" name="grpname" id="grpname" value="" class="ui-widget-content ui-corner-all">
+               <label for="grps_select">Content</label>
+               <select name="grps_select" id="grps_select_id" size="5" multiple style="width:260px"></select>
+            </fieldset>
+         </form>
+      </div>
+
+      <script type="text/javascript">
+         var config = <%== $config %>;
+
+         var $body = $("body");
+
+         $(document).on({
+            ajaxStart: function() { $body.addClass("loading");    },
+            ajaxStop: function() { $body.removeClass("loading"); }
+         });
+
+
+         $(function () {
             /* --------------- VARS ----------------*/
             var tabCounter = 2;
 
             /* --------------- INIT ----------------*/
-            var tabs = $( "#tabs" ).tabs();
+            var tabs          = $( "#tabs" ).tabs();
 
             // get all exists groups via Ajax
             $.getJSON( '<%= url_for 'geras' %>?sub=groups', function( data ) {
                var d = data.groups;
                for (var group in data.groups) {
-                  addTab( group, data.groups[group]);            
+                  var series = data.groups[group];
+                  addTab( group, series);
                   tabCounter++;
                }
             });
@@ -62,226 +81,306 @@
             function addTab(group, series) {
                var groupname = group.split("/");
                var dashboardId = 'dashboard-' + tabCounter;
-               var label = groupname[groupname.length-1].ucfirst();
+               var label = groupname.last().ucfirst();
                var id = "tabs-" + tabCounter;
-               var li = "<li><a href='#" + dashboardId + "'>" + label + "</a></li>";
+               var li = "<li><a href='#" + dashboardId + "'>" + label + "</a><span class='ui-icon ui-icon-close' style='position:absolute;top:2px;right:2px'>Remove Tab</span></li>";
 
                tabs.find( ".ui-tabs-nav" ).append( li );
                tabs.append( "<div class='dashboard' id='" + dashboardId + "'></div>" );
                tabs.tabs( "refresh" );
 
 
-               var ds = new $.ig.DataSource({ 
-                  type: "json", 
+               var ds = new $.ig.DataSource({
+                  type: "json",
                   dataSource: '/geras?sub=groups&type=sensorgrp&subparams=' + group
                }).dataBind();
 
                $('#' + dashboardId).igTileManager({
-                   marginLeft: 10,
-                   marginTop: 10,
-                   rightPanelTilesWidth: 200,
-                   rightPanelTilesHeight: 150,
-                   maximizedState: $('#maximizedState').val(),
-                   minimizedState: $('#minimizedState').val(),
-                   dataSource: ds,
-                   rendered: function (event, ui) {
+                  marginLeft: 10,
+                  marginTop: 10,
+                  rightPanelTilesWidth: 200,
+                  rightPanelTilesHeight: 150,
+                  maximizedState: $('#maximizedState').val(),
+                  minimizedState: $('#minimizedState').val(),
+                  dataSource: ds,
+                  rendered: function (event, ui) {
                      $('#' + dashboardId).find('ul').igTree();
-                   },
+                  },
                });
-            }  
-   
+            }
+
+            // -------- Add new Group ----------
+            // Add new Group: Button -----------
+            $( "#addgrp" ).button({
+               icons: {
+                  primary: "ui-icon-plusthick"
+               },
+               text: false
+            }).click(function(){
+               // get options ... 
+               $.getJSON( '<%= url_for 'geras' %>?sub=series_unique&subparams=1,full&type=seriestypes', function( data ) {
+                  $("#grps_select_id").html("");
+                  var options = [];
+                  for (var sensor in data) {
+                     options.push("<option value='" + sensor + "'>Node: " + sensor + ' / ' + data[sensor].ucfirst() + "</option>");
+                  }
+                  $("#grps_select_id").html(options.join(""));
+               });
+
+               dialog.dialog( "open" );
+            });
+
+            // Add new Group: Dialog -----------
+            var dialog = $( "#dialog" ).dialog({
+               autoOpen: false,
+               modal: true,
+               buttons: {
+                  Add: function() {
+                     addTab();
+                     $( this ).dialog( "close" );
+                  },
+                  Cancel: function() {
+                     $( this ).dialog( "close" );
+                  }
+               },
+               close: function() {
+                  form[ 0 ].reset();
+               }
+            });
+
+            // Add new Group: Send and add tab --
+            // addTab form: calls addTab function on submit and closes the dialog
+            var form = dialog.find( "form" ).submit(function( event ) {
+               //addTab();
+               dialog.dialog( "close" );
+               event.preventDefault();
+            });
+            // ^-^-^-^-^- Add new Group ^-^-^-^-^-
 
 
             /* --------------- PROTOTYPES ----------------*/
             String.prototype.ucfirst = function()
             {
-                return this.charAt(0).toUpperCase() + this.substr(1);
+               return this.charAt(0).toUpperCase() + this.substr(1);
             }
-            
 
-        });
-    </script>
-
-
-    <textarea id="maximizedState" style="display:none">
-      <div style="width: 95%; min-width: 210px;">
-         <div id="chart-${sensor}"></div>
-      </div>
-      <img src="images/${info.config.Image}" style="position:absolute;top:10px;left:5px;">
-      <div id="legends" style="position:absolute;top:10px;right:10px">
-        <div id="legend"></div>
-        <div id="legend2"></div>
-      </div>
-
-      <div class="optionContainer">
-          Interval
-          <br />
-          <select id="select-interval" class="selectBounds">
-              <option value="1m">Minute</option>
-              <option value="1h" selected="selected">Houre</option>
-              <option value="1d">Day</option>
-              <option value="1w">Week</option>
-          </select>
-      </div>
-
-      <div class="optionContainer">
-          Rollup
-          <br />
-          <select id="select-rollup" class="selectBounds">
-              <option value="avg" selected="selected">Average</option>
-              <option value="sum">Sum</option>
-              <option value="max">Max</option>
-              <option value="min">Min</option>
-          </select>
-      </div>
-
-
-      <script type="text/javascript">
-         $(function () {
-
-            var rollup = 'avg';
-            var interval = '1d';
-
-            dsChart = new $.ig.DataSource({ 
-               type: "json", 
-               dataSource: '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval,
-            }).dataBind();
-
-            $('.selectBounds').on({
-                change: function (e) {
-                    var interval = $('#select-interval').val();
-                    var rollup   = $('#select-rollup').val();
-                    var dgurl = '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval + '&foo=1';
-                    dsChart = new $.ig.DataSource({type: 'json', dataSource: dgurl,}).dataBind();
-                    $("#chart-${sensor}").igDataChart( "option", "dataSource", dsChart);
-                }
-            });
-
-
-            var possibleValues = "${info.config.ValNames}".split(',');
-            var axes = [{
-                    type: "categoryX",
-                    name: "xAxis",
-                    label: "Date",
-                    stroke: "lightgray",
-                    strokeThickness: 3,
-                    title: "Time"
-            }];
-            var series = [];
-            var axesPos = ['outsideRight', 'outsideLeft', 'outsideLeft', 'outsideLeft'];
-            for(var i=0;i<possibleValues.length;i++){
-               axes.push({
-                    type: "numericY",
-                    name: 'axis-' + possibleValues[i],
-                    minimumValue: parseFloat(config.display[possibleValues[i]].minimumValue),
-                    maximumValue: parseFloat(config.display[possibleValues[i]].maximumValue),
-                    labelLocation: axesPos[i],
-                    strokeThickness: 1,
-                    stroke: "lightgray",
-                    title: config.display[possibleValues[i]].text
-                });
-               var pfad = 'Power';
-               if(possibleValues[i] != 'Power'){
-                  pfad = 'Value0';
-               }
-               series.push({
-                    type: "line",
-                    name: possibleValues[i],
-                    title: possibleValues[i] + " in " + config.display[possibleValues[i]].suffix,
-                    xAxis: "xAxis",
-                    yAxis: 'axis-' + possibleValues[i],
-                    valueMemberPath: pfad,
-                    isHighlightingEnabled: true,
-                    isTransitionInEnabled: true,
-                    legend: { element: "legend" }
-                });
+            Array.prototype.last = function() {
+               return this[this.length - 1];
             }
-            
-            $("#chart-${sensor}").igDataChart({
-                dataSource: dsChart,
-                brushes: [ "gray", "blue", "green", "red", "brown" ],
-                width: "100%",
-                height: "450px",
-                title: "${name}",
-                subtitle: "${text}",
-                horizontalZoomable: true,
-                verticalZoomable: true,
-                axes: axes,
-                series: series,
-                leftMargin: 5,
-                topMargin: 15
-            });
-        });
-      </script>
-    </textarea>
-    
-    
-    <textarea id="minimizedState" style="display:none">
-       <div style="width:99%; height:120" ><!-- Start Big Div -->  
-         <img src="images/${info.config.Image}" style="position:absolute;top:5px;left:5px;">
-         <div id="radialGauge-${sensor}" style="float:left"></div>
-         <script type="text/javascript">
-           $(function () {
-               var display = config.display['${type}'];
-               var vals = [${value.0.last}, ${value.1.last}, ${value.2.last}, ${value.3.last}, ${value.4.last}, ${value.5.last}, ${value.6.last}, ${value.7.last}, ${value.8.last}, ${value.9.last}];
-               var vidx = (typeof display.valueidx == 'undefined' ? 0 : display.valueidx);
-               var calc = parseInt(vals[vidx] / display.divider);
-               var data = google.visualization.arrayToDataTable([
-                         ['Label', 'Value'],
-                         ['${type}', calc ],
-                       ]);
 
-               var options = {
-                  width: 120, height: 120,
-                  redFrom: display.redFrom, redTo: display.redTo,
-                  yellowFrom:display.yellowFrom, yellowTo: display.yellowTo,
-                  greenFrom:display.greenFrom, greenTo: display.greenTo,
-                  min:display.minimumValue, max:display.maximumValue,
-                  minorTicks: 5
-               };
-
-               var chart = new google.visualization.Gauge(document.getElementById('radialGauge-${sensor}'));
-               chart.draw(data, options);
          });
-         </script>
+      </script>
 
-         <div id="bulletgraph-${sensor}"></div>
-      </div><!-- End Big Div -->  
-   
-       <script type="text/javascript">
-           $(function () {
+
+      <textarea id="maximizedState" style="display:none">
+         <div style="width: 95%; min-width: 210px;">
+            <div id="chart-${sensor}"></div>
+         </div>
+         <img src="images/${info.config.Image}" style="position:absolute;top:10px;left:5px;">
+         <div id="legends-${sensor}" style="position:absolute;top:10px;right:10px">
+            <div id="legend-${sensor}"></div>
+            <div id="legend2-${sensor}"></div>
+         </div>
+
+         <div class="optionContainer">
+            Interval
+            <br />
+            <select id="select-interval" class="selectBounds">
+               <option value="1m">Minute</option>
+               <option value="1h" selected="selected">Houre</option>
+               <option value="1d">Day</option>
+               <option value="1w">Week</option>
+            </select>
+         </div>
+
+         <div class="optionContainer">
+            Rollup
+            <br />
+            <select id="select-rollup" class="selectBounds">
+               <option value="avg" selected="selected">Average</option>
+               <option value="sum">Sum</option>
+               <option value="max">Max</option>
+               <option value="min">Min</option>
+            </select>
+         </div>
+
+         <div class="optionContainer">
+            Start Time
+            <br />
+            <input id="starttime" class="datetimepicker" type="text" >
+         </div>
+
+         <div class="optionContainer">
+            End Time
+            <br />
+            <input id="endtime" class="datetimepicker" type="text" >
+         </div>
+
+
+         <script type="text/javascript">
+
+            $(function () {
+               $('.datetimepicker').datetimepicker({
+                  closeOnDateSelect: true,
+                  maxDate:'+1970/01/01',
+                  onChangeDateTime : function(dp,input){
+                     $('.selectBounds').trigger( 'change' );
+                  },
+               });
+
+               var rollup = 'avg';
+               var interval = '1d';
+
+               dsChart = new $.ig.DataSource({
+                  type: "json",
+                  dataSource: '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval,
+               }).dataBind();
+
+               $('.selectBounds').on({
+                  change: function (e) {
+                     var interval = $('#select-interval').val();
+                     var rollup   = $('#select-rollup').val();
+
+                     var startdate= new Date($('#starttime').val());
+                     var enddate  = new Date($('#endtime').val());
+
+                     var start = ( $('#starttime').val() ? startdate.getTime() : '');
+                     var end = ( $('#endtime').val() ? enddate.getTime() : '');
+
+                     var dgurl = '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval;
+                     if(start)
+                     dgurl += ',' + (start/1000);
+                     if(end)
+                     dgurl += ( start=='' ? ',,' : ',') + (end/1000);
+                     dsChart = new $.ig.DataSource({type: 'json', dataSource: dgurl,}).dataBind();
+                     $("#chart-${sensor}").igDataChart( "option", "dataSource", dsChart);
+                  }
+               });
+
+               var possibleValues = "${info.config.ValNames}".split(',');
+               var axes = [{
+                  type: "categoryX",
+                  name: "xAxis",
+                  label: "Date",
+                  stroke: "lightgray",
+                  strokeThickness: 3,
+                  title: "Time"
+               }];
+               var series = [];
+               var axesPos = ['outsideRight', 'outsideLeft', 'outsideLeft', 'outsideLeft'];
+               for(var i=0;i<possibleValues.length;i++){
+                  axes.push({
+                     type: "numericY",
+                     name: 'axis-' + possibleValues[i],
+                     minimumValue: parseFloat(config.display[possibleValues[i]].minimumValue),
+                     maximumValue: parseFloat(config.display[possibleValues[i]].maximumValue),
+                     labelLocation: axesPos[i],
+                     strokeThickness: 1,
+                     stroke: "lightgray",
+                     title: config.display[possibleValues[i]].text
+                  });
+                  var pfad = 'Power';
+                  if(possibleValues[i] != 'Power'){
+                     pfad = 'Value' + (i - 1);
+                  }
+                  series.push({
+                     type: "line",
+                     name: possibleValues[i],
+                     title: possibleValues[i] + " in " + config.display[possibleValues[i]].suffix,
+                     xAxis: "xAxis",
+                     yAxis: 'axis-' + possibleValues[i],
+                     valueMemberPath: pfad,
+                     isHighlightingEnabled: true,
+                     isTransitionInEnabled: true,
+                     legend: { element: "legend-${sensor}" }
+                  });
+               }
+
+               $("#chart-${sensor}").igDataChart({
+                  dataSource: dsChart,
+                  brushes: [ "gray", "blue", "green", "red", "brown" ],
+                  width: "100%",
+                  height: "450px",
+                  title: "${name}",
+                  subtitle: "${text}",
+                  horizontalZoomable: true,
+                  verticalZoomable: true,
+                  axes: axes,
+                  series: series,
+                  leftMargin: 5,
+                  topMargin: 15
+               });
+            });
+         </script>
+      </textarea>
+
+
+      <textarea id="minimizedState" style="display:none">
+         <div style="width:99%; height:120" ><!-- Start Big Div -->
+            <img src="images/${info.config.Image}" style="position:absolute;top:5px;left:5px;">
+            <div id="radialGauge-${sensor}" style="float:left"></div>
+            <script type="text/javascript">
+               $(function () {
+                  var display = config.display['${type}'];
+                  var vals = [${value.0.last}, ${value.1.last}, ${value.2.last}, ${value.3.last}, ${value.4.last}, ${value.5.last}, ${value.6.last}, ${value.7.last}, ${value.8.last}, ${value.9.last}];
+                  var vidx = (typeof display.valueidx == 'undefined' ? 0 : display.valueidx);
+                  var calc = parseInt(vals[vidx] / display.divider);
+                  var data = google.visualization.arrayToDataTable([
+                  ['Label', 'Value'],
+                  ['${type}', calc ],
+                  ]);
+
+                  var options = {
+                     width: 120, height: 120,
+                     redFrom: display.redFrom, redTo: display.redTo,
+                     yellowFrom:display.yellowFrom, yellowTo: display.yellowTo,
+                     greenFrom:display.greenFrom, greenTo: display.greenTo,
+                     min:display.minimumValue, max:display.maximumValue,
+                     minorTicks: 5
+                  };
+
+                  var chart = new google.visualization.Gauge(document.getElementById('radialGauge-${sensor}'));
+                  chart.draw(data, options);
+               });
+            </script>
+
+            <div id="bulletgraph-${sensor}"></div>
+         </div><!-- End Big Div -->
+
+         <script type="text/javascript">
+            $(function () {
                var $bulletGraph = $("#bulletgraph-${sensor}");
                $bulletGraph.igBulletGraph({
-                   height: "110px",
-                   width:  "20px",
-                   orientation: "vertical", 
-                   value: ((${power}-2000)/(3300 - 2000)) * 100,
-                   labelsPreTerminal: 101,
-                   maximumValue: 100,
-                   labelInterval: 50,
-                   minorTickCount: 0,
-                   ranges: [
-                       {
-                           name: 'bad',
-                           startValue: 0,
-                           endValue: 30
-                       },
-                       {
-                           name: 'acceptable',
-                           startValue: 30,
-                           endValue: 60
-                       },
-                       {
-                           name: 'good',
-                           startValue: 60,
-                           endValue: 100
-                       }
+                  height: "110px",
+                  width:  "20px",
+                  orientation: "vertical",
+                  value: ((${power}-2000)/(3300 - 2000)) * 100,
+                  labelsPreTerminal: 101,
+                  maximumValue: 100,
+                  labelInterval: 50,
+                  minorTickCount: 0,
+                  ranges: [
+                  {
+                     name: 'bad',
+                     startValue: 0,
+                     endValue: 30
+                  },
+                  {
+                     name: 'acceptable',
+                     startValue: 30,
+                     endValue: 60
+                  },
+                  {
+                     name: 'good',
+                     startValue: 60,
+                     endValue: 100
+                  }
                   ]
                });
-           });
-       </script>
-    </textarea>
+            });
+         </script>
+      </textarea>
 
-   <div class="modal"></div>
-</body>
+      <div class="modal"></div>
+   </body>
 </html>

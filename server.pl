@@ -26,6 +26,22 @@ my $geras = Geras::Api->new({
 
 # -----------------------
 
+sub _seriestypes {
+   my $data = shift || [];
+
+   my $return = {};   
+   
+   foreach my $topic (@$data){
+      my $sensor = XHome::Sensor->new({
+         topic => $topic.'/power',
+         geras => $geras,
+      }) or die "Can't initialze Sensor with topic: $topic!";
+      $return->{$sensor->id} = $sensor->group(1);
+   }
+   
+   return $return;
+}
+
 sub _timedata {
    my $data = shift || [];
    
@@ -147,6 +163,11 @@ get '/geras' => sub {
    elsif(defined $c->param('type') and $c->param('type') eq 'timedata'){
       $c->render(
          json => _timedata( $geras->$sub(@params) )
+      );
+   }
+   elsif(defined $c->param('type') and $c->param('type') eq 'seriestypes'){
+      $c->render(
+         json => _seriestypes( $geras->$sub(@params) )
       );
    }
 

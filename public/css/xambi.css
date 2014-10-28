@@ -70,6 +70,10 @@
 #legends, #chart { float: left; }
 #chartTitle { width: 500px; text-align: center; }
 
+#dialog label, #dialog input { display:block; }
+#dialog label { margin-top: 0.5em; }
+#dialog input, #dialog textarea { width: 95%; }
+  
 /* Start by setting display:none to make this hidden.
    Then we position it in relation to the viewport window
    with position:fixed. Width, height, top and left speak

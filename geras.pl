@@ -10,7 +10,7 @@ my $geras = Geras::Api->new({
 
 $ENV{CONFIGFILE} = 'xambiserver/cfg/sensors.cfg';
 
-#$geras->clearCache();
+$geras->clearCache();
 
 # Publish
 #dum( $geras->publish('/sensors/155/power', 4444) );
@@ -27,8 +27,8 @@ $ENV{CONFIGFILE} = 'xambiserver/cfg/sensors.cfg';
 #
 ## Series
 #dum( $geras->series() );
-#dum( $geras->series_unique(1) );
-#dum( $geras->series_unique(1, '/sensors/xxx') );
+dum( $geras->series_unique(1) );
+dum( $geras->series_unique(1, '/sensors/xxx') );
 #dum( $geras->series('155') );
 #dum( $geras->lastvalue('/sensors/155/power') );
 #dum( $geras->rollup('/sensors/155/power','min','1d') );
@@ -45,10 +45,10 @@ $ENV{CONFIGFILE} = 'xambiserver/cfg/sensors.cfg';
 #dum( $geras->share_delete('/d123p432/myshare') );
 
 # Groups
-#dum( $geras->groups_new('groupname', ['/sensors/155/power', '/sensors/155/0']) );
+#dum( $geras->groups_new('Arbeitszimmer', ['/sensors/155/power', '/sensors/155/0', '/sensors/155/1']) );
 #dum( $geras->groups_new('groupname_second', []) );
-dum( $geras->groups() );
-#dum( $geras->groups('groupname') );
+#dum( $geras->groups('Arbeitszimmer') );
+#dum( $geras->groups() );
 #dum( $geras->groups_delete('sensorgroup') );
 #dum( $geras->groups() );
 

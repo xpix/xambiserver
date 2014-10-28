@@ -211,7 +211,13 @@ sub geras {
 sub group {
 #-------------------------------------------------------------------------------
    my $obj   = shift || die "No Object!";
-   return $obj->{geras}->series_group($obj->id);
+   my $notFull = shift || 0;
+
+   my $grp = $obj->{geras}->series_group($obj->id);
+
+   my $name = (split(/\//, $grp))[-1];
+   return $name if($notFull);
+   return $grp;
 }
 
 
