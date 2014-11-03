@@ -96,6 +96,8 @@
                }).dataBind();
 
                $('#' + dashboardId).igTileManager({
+                  columnWidth: '180px',
+                  columnHeight: '150px',
                   marginLeft: 10,
                   marginTop: 10,
                   rightPanelTilesWidth: 200,
@@ -232,6 +234,10 @@ console.log(data);
                   },
                });
 
+               var startolddate  = new Date();
+               var endolddate    = new Date();
+
+
                var rollup = 'avg';
                var interval = '1d';
 
@@ -250,6 +256,11 @@ console.log(data);
 
                      var start = ( $('#starttime').val() ? startdate.getTime() : '');
                      var end = ( $('#endtime').val() ? enddate.getTime() : '');
+
+                     if(startolddate.getTime() == startdate.getTime() && endolddate.getTime() == enddate.getTime()){
+                        return;
+                     }
+                     
 
                      var dgurl = '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval;
                      if(start)
@@ -274,7 +285,7 @@ console.log(data);
                   title: "Time",
                   formatLabel: function (item) {  
                         var datum = new Date(parseInt(item.Stamp) * 1000);
-                        var ret = datum.toDateString().replace(/\S+\s+(\S+)\s+(\d+).+/, "$2 $1");  
+                        var ret = datum.toDateString().replace(/\S+\s+(\S+)\s+(\d+).+/, "$2$1");  
                         ret += "\n";
                         ret += datum.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
   
@@ -321,6 +332,7 @@ console.log(data);
                   horizontalZoomable: true,
                   verticalZoomable: true,
                   axes: axes,
+                  displayType: "continuous",
                   series: series,
                   leftMargin: 5,
                   topMargin: 15

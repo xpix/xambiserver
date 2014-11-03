@@ -338,7 +338,10 @@ sub groups {
       push(@{$return->{'/group/aaaa/unknown'}}, $serie)
          if(not exists $grouped->{$serie});
    }
-   
+   # Dont display if all sensors grouped
+   delete $return->{'/group/aaaa/unknown'} 
+      if(not scalar @{$return->{'/group/aaaa/unknown'}});
+
    if($only){
       foreach my $group (sort keys %$return){
          return { $group => $return->{$group} }
@@ -506,6 +509,7 @@ sub _getHTTP {
    warn "$type: $url";
    
    my $ua = LWP::UserAgent->new();
+   $ua->env_proxy();
    my $req = HTTP::Request->new($type, $url);
    $req->authorization_basic($obj->{apikey}, '');
       
@@ -543,6 +547,7 @@ sub _getJSON {
    else {
       warn "$type: $url";
       my $ua = LWP::UserAgent->new();
+      $ua->env_proxy();
       my $req = HTTP::Request->new($type, $url);
       $req->authorization_basic($obj->{apikey}, '');
       if($data){
