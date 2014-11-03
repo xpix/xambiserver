@@ -27,8 +27,8 @@ $geras->clearCache();
 #
 ## Series
 #dum( $geras->series() );
-dum( $geras->series_unique(1) );
-dum( $geras->series_unique(1, '/sensors/xxx') );
+#dum( $geras->series_unique(1) );
+#dum( $geras->series_unique(1, '/sensors/xxx') );
 #dum( $geras->series('155') );
 #dum( $geras->lastvalue('/sensors/155/power') );
 #dum( $geras->rollup('/sensors/155/power','min','1d') );
@@ -49,7 +49,8 @@ dum( $geras->series_unique(1, '/sensors/xxx') );
 #dum( $geras->groups_new('groupname_second', []) );
 #dum( $geras->groups('Arbeitszimmer') );
 #dum( $geras->groups() );
-#dum( $geras->groups_delete('sensorgroup') );
+dum( $geras->groups_delete('/group/5zn8tpvdw3/unknown') );
+#dum( $geras->groups_delete('Wohnzimmer') );
 #dum( $geras->groups() );
 
 # Funtions
@@ -57,8 +58,9 @@ dum( $geras->series_unique(1, '/sensors/xxx') );
 #dum( $geras->series_add_to_group(152, 'groupname' ) );
 #dum( $geras->groups() );
 #printf "Move series: 152 to groupname_second\n";
-#dum( $geras->series_move_to_group(152, 'groupname_second' ) );
-#dum( $geras->groups() );
+dum( $geras->groups() );
+dum( $geras->series_move_to_group('112,315', 'Wohnzimmer' ) );
+dum( $geras->groups() );
 #printf "Remove series: 152 from groupname_second\n";
 #dum( $geras->series_remove_from_group(152, 'groupname_second' ) );
 #dum( $geras->groups() );

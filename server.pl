@@ -60,6 +60,7 @@ sub _timedata {
       my $sdata = {
          "Date" => sprintf('%02d.%02d.%04d', $mday, $mon+1, $year + 1900),
          "Time" => sprintf('%02d:%02d:%02d', $hour, $min, $sec),
+         "Stamp" => $timegrouped->{$timestamp}->[0]->{'t'},
       };         
       foreach my $item (@{$timegrouped->{$timestamp}}){
          my @elements = split(/\//, $item->{'n'});

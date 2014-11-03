@@ -3,12 +3,14 @@ package Geras::Api;
 use warnings;
 use strict;
 
+use Carp;
 use LWP::UserAgent;
 use JSON::XS;
 use URI::Escape;
 use IPC::ShareLite qw( :lock );
-use Cache::Memory;
-use Cache::File;
+#use Cache::Memory;
+#use Cache::File;
+use CHI;
 
 use Data::Dumper;
 sub dum { printf "DEBUG: %s\n", Dumper(@_); };
@@ -35,7 +37,7 @@ Geras::Api - Module to get a all data from geras.1248.io.
    apikey  => 'kjdahdkjhasdlkj...'}
   );
   my $list = $geras->series();
-  die $list->error() if($list->error());
+  confess $list->error() if($list->error());
 
 =head1 DESCRIPTION
 
@@ -53,20 +55,25 @@ sub new {
    bless($self, $class);
 
    # API Data
-   $self->{'apikey'}  = delete $args->{'apikey'} || die "No Apikey in new!";
+   $self->{'apikey'}  = delete $args->{'apikey'} || confess "No Apikey in new!";
    $self->{'host'}    = delete $args->{'host'}   || 'geras.1248.io';
 
    #$self->{'cache'}   = Cache::Memory->new(
-   $self->{'cache'}   = Cache::File->new(
-      cache_root      => '/tmp/GERASCACHE',
-      default_expires => '3600 sec',
-   );
+   #$self->{'cache'}   = Cache::File->new(
+   #   cache_root      => '/tmp/GERASCACHE',
+   #   default_expires => '3600 sec',
+   #);
+   $self->{'cache'} = CHI->new( 
+      driver => 'Memory', 
+      global => 1,
+      expires_in => 600,
+      );
 
    $self->{'share'} = IPC::ShareLite->new(
         -key     => 'mqtt',
         -create  => 'yes',
         -destroy => 'no'
-    ) or die $!;
+    ) or confess $!;
 
    return $self;
 }
@@ -74,7 +81,7 @@ sub new {
 #-------------------------------------------------------------------------------
 sub error {
 #-------------------------------------------------------------------------------
-   my $obj   = shift || die "No Object!";
+   my $obj   = shift || confess "No Object!";
    my $msg   = shift || return $ERRORS;
 
    warn $msg;
@@ -89,8 +96,8 @@ sub error {
 #-------------------------------------------------------------------------------
 sub publish {
 #-------------------------------------------------------------------------------
-   my $obj   = shift || die "No Object!";
-   my $serie = shift || die "No Serie!";
+   my $obj   = shift || confess "No Object!";
+   my $serie = shift || confess "No Serie!";
    my $value = shift || '';
 
    # Pack in Array
@@ -126,7 +133,7 @@ sub publish {
 #-------------------------------------------------------------------------------
 sub fetchdata {
 #-------------------------------------------------------------------------------
-   my $obj   = shift || die "No Object!";
+   my $obj   = shift || confess "No Object!";
 
    # get shared Memory for web process
    my $string = $obj->{share}->fetch;
@@ -146,16 +153,32 @@ sub fetchdata {
 #-------------------------------------------------------------------------------
 sub series {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
+   my $obj = shift || confess "No Object!";
    my $only = shift || '';
    
-   $obj->_getJSON('/serieslist', $only);
+   my $return = [];
+   if($only and $only =~ /,/){
+      my $erg = $obj->_getJSON('/serieslist');
+      foreach my $tag (split(',',$only)){
+         foreach my $serie (@$erg){
+            push(@$return, $serie)
+               if($serie =~ /sensors\/$tag/i);
+         }
+      }
+      return $return
+   }
+   elsif($only){
+      return $obj->_getJSON('/serieslist', $only);
+   }
+   else {
+      return $obj->_getJSON('/serieslist');
+   }
 }
 
 #-------------------------------------------------------------------------------
 sub series_id {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
+   my $obj = shift || confess "No Object!";
    my $serie   =shift || return '';
 
    my @tokens = split(/\//, $serie);
@@ -165,8 +188,8 @@ sub series_id {
 #-------------------------------------------------------------------------------
 sub series_group {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
-   my $serietag = shift || die "No Serie";
+   my $obj = shift || confess "No Object!";
+   my $serietag = shift || confess "No Serie";
 
    my $GroupName = '';
    my $allGroups = $obj->groups();
@@ -178,13 +201,13 @@ sub series_group {
       }
    }
 
-   return $GroupName || 'unknowngroup';
+   return $GroupName;
 }
 
 #-------------------------------------------------------------------------------
 sub series_unique {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
+   my $obj = shift || confess "No Object!";
    my $topic = shift || 0;
    my $full = shift || 0;
    
@@ -207,8 +230,8 @@ sub series_unique {
 #-------------------------------------------------------------------------------
 sub series_delete {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
-   my $serie   =shift || die "No Serie to delete!";
+   my $obj = shift || confess "No Object!";
+   my $serie   =shift || confess "No Serie to delete!";
    
    $obj->{cache}->clear();
    $obj->_getHTTP('/series'.$serie, undef, 'DELETE');
@@ -217,15 +240,15 @@ sub series_delete {
 #-------------------------------------------------------------------------------
 sub series_add_to_group {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
-   my $serie =shift || die "No Serie to delete!";
-   my $group =shift || die "No Serie to delete!";
+   my $obj = shift || confess "No Object!";
+   my $serie =shift || confess "No Serie to add to group!";
+   my $group =shift || confess "No Group to add to group!";
 
    ($serie) = $obj->series($serie)
       or return $obj->error("Can't find serie $serie!");
 
    $group = $obj->groups($group)
-      or return $obj->error("Can't find group $group!");
+      or $obj->groups_new($group, []);
 
 dum($group);
 
@@ -239,14 +262,15 @@ dum($group);
 #-------------------------------------------------------------------------------
 sub series_remove_from_group {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
-   my $serie =shift || die "No Serie to delete!";
-   my $group =shift || die "No Serie to delete!";
+   my $obj = shift || confess "No Object!";
+   my $serie =shift || confess "No Serie to delete!";
+   my $group =shift || confess "No Serie to delete!";
 
    my $serieHash;
-   ($serie) = $obj->series($serie)
+   my $series = $obj->series($serie)
       or return $obj->error("Can't find serie $serie!");
-   map {$serieHash->{$_} = 1} @$serie;
+
+   map {$serieHash->{$_} = 1} @$series;
    
    ($group) = $obj->groups($group)
       or return $obj->error("Can't find group $group!");
@@ -266,37 +290,46 @@ sub series_remove_from_group {
 #-------------------------------------------------------------------------------
 sub series_move_to_group {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
-   my $serietag =shift || die "No Serietag to delete!";
-   my $group =shift || die "No Serie to delete!";
+   my $obj = shift || confess "No Object!";
+   my $seriestag =shift || confess "No Serietag to move!";
+   my $group =shift || confess "No Serie to move!";
 
-   my ($serie) = $obj->series($serietag)
-      or return $obj->error("Can't find serie $serietag!");
-
-   ($group) = $obj->groups($group)
-      or return $obj->error("Can't find group $group!");
-
-   # Try to find serie in an old group ..   
-   my $sourceGroupName = $obj->series_group($serietag);
-
-   # remove from old group ...
-   if($sourceGroupName){
-      $obj->series_remove_from_group($serietag, $sourceGroupName);
+   my ($series) = $obj->series($seriestag)
+      or return $obj->error("Can't find serie $seriestag!");
+   
+   foreach my $serie (@$series){
+      # Try to find serie in an old group ..   
+      my $sourceGroupName = $obj->series_group($serie);
+   
+      # remove from old group ...
+      if($sourceGroupName){
+         $obj->series_remove_from_group($serie, $sourceGroupName);
+      }
    }
-   # ... and add to new group
-   $obj->series_add_to_group($serietag, $group);
+
+   my ($targetGroup) = $obj->groups($group);
+   if(not $targetGroup){
+         # .. create new group with series
+      $obj->groups_new($group, $series);
+   }
+   else {
+      # ... and add to new group
+      $obj->series_add_to_group($series, $targetGroup);
+   }      
+
 }
 
 #-------------------------------------------------------------------------------
 sub groups {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
+   my $obj = shift || confess "No Object!";
    my $only = shift || '';
 
    my $grouped = {};
    my $return = $obj->_getJSON('/group');
    foreach my $group (keys %$return){
-      map { $grouped->{$_} = 1 } @{$return->{$group}};
+      map { $grouped->{$_} = 1 } @{$return->{$group}}
+         if(ref $return->{$group});
    }
 
    # Add all series to unknown wo group
@@ -320,7 +353,7 @@ sub groups {
 #-------------------------------------------------------------------------------
 sub group_name {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
+   my $obj = shift || confess "No Object!";
    my $group   =shift || return '';
 
    my @tokens = split(/\//, $group);
@@ -331,9 +364,10 @@ sub group_name {
 #-------------------------------------------------------------------------------
 sub groups_new {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
-   my $name = shift || die "No Name!";
+   my $obj = shift || confess "No Object!";
+   my $name = shift || confess "No Name!";
    my $list = shift || [];
+
 
    my $data = {
       group_id => $name,
@@ -347,21 +381,23 @@ sub groups_new {
 #-------------------------------------------------------------------------------
 sub groups_delete {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
-   my $name = shift || die "No Name!";
+   my $obj = shift || confess "No Object!";
+   my $name = shift || confess "No Name!";
    
-   my ($todelete) = keys %{$obj->groups($name)}
-      or return $obj->error("Can't find group $name for delete!");
-
-   $obj->{cache}->clear();
-   $obj->_getHTTP($todelete, undef, 'DELETE');
+   if(my $groups =   $obj->groups($name)){
+      my ($todelete) = keys %{$groups}
+         or return $obj->error("Can't find group $name for delete!");
+   
+      $obj->{cache}->clear();
+      $obj->_getHTTP($todelete, undef, 'DELETE');
+   }
 }
 
 
 #-------------------------------------------------------------------------------
 sub shares {
 #-------------------------------------------------------------------------------
-   my $obj     = shift || die "No Object!";
+   my $obj     = shift || confess "No Object!";
    my $type    = shift || '';
    $type = ($type ? 'woshare' : 'share');   
    
@@ -371,8 +407,8 @@ sub shares {
 #-------------------------------------------------------------------------------
 sub share_delete {
 #-------------------------------------------------------------------------------
-   my $obj        = shift || die "No Object!";
-   my $share      = shift || die "No Share to delete!";
+   my $obj        = shift || confess "No Object!";
+   my $share      = shift || confess "No Share to delete!";
    my $type       = shift || '';
    $type = ($type ? 'woshare' : 'share');   
 
@@ -383,17 +419,17 @@ sub share_delete {
 #-------------------------------------------------------------------------------
 sub rollup {
 #-------------------------------------------------------------------------------
-   my $obj     = shift || die "No Object!";
-   my $serie   =shift || die "No Serie!";
-   my $rollup  =shift || die "No Rollup ('min','max','avg','sum')!";
-   my $interval=shift || die "No Interval ('s','m','h','d','w','mo','y')!";
+   my $obj     = shift || confess "No Object!";
+   my $serie   =shift || confess "No Serie!";
+   my $rollup  =shift || confess "No Rollup ('min','max','avg','sum')!";
+   my $interval=shift || confess "No Interval ('s','m','h','d','w','mo','y')!";
    my $start   =shift || 0;
    my $end     =shift || 0;
 
    my $possibleRollup = ['min','max','avg','sum'];
    my $possibleInterval = ['s','m','h','d','w','mo','y'];
 
-   die "Rollup $rollup are not correct!"
+   confess "Rollup $rollup are not correct!"
       if(not grep(/^$rollup$/i, @$possibleRollup));
 
    my $url = sprintf('/series%s?rollup=%s&interval=%s', $serie, $rollup, $interval);
@@ -414,14 +450,14 @@ dum($url);
 #-------------------------------------------------------------------------------
 sub timewindow {
 #-------------------------------------------------------------------------------
-   my $obj     =shift || die "No Object!";
-   my $serie   =shift || die "No Serie!";
+   my $obj     =shift || confess "No Object!";
+   my $serie   =shift || confess "No Serie!";
    my $zeit    =shift || '';
    my $start   =shift || 0;
    my $end     =shift || 0;
    if($zeit){
       my ($count, $type) = $zeit =~ /^(\d+)([smhdw]+)$/;
-      die "Can't read $zeit with type: $type in timewindow!!" 
+      confess "Can't read $zeit with type: $type in timewindow!!" 
          if(not exists $timeWindow->{lc $type});
       $start = time - ($count * $timeWindow->{lc $type});
    }
@@ -437,8 +473,8 @@ sub timewindow {
 #-------------------------------------------------------------------------------
 sub lastvalue {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
-   my $serie=shift || die "No Serie!";
+   my $obj = shift || confess "No Object!";
+   my $serie=shift || confess "No Serie!";
    
    values %{$obj->_makeHash($obj->_getJSON('/now'.$serie))};
 }
@@ -447,7 +483,7 @@ sub lastvalue {
 #-------------------------------------------------------------------------------
 sub _makeHash {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
+   my $obj = shift || confess "No Object!";
    my $entrys = shift || {};
    
    my $return = {};
@@ -461,8 +497,8 @@ sub _makeHash {
 #-------------------------------------------------------------------------------
 sub _getHTTP {
 #-------------------------------------------------------------------------------
-   my $obj = shift   || die "No Object!";
-   my $url = shift   || die "No URL!";
+   my $obj = shift   || confess "No Object!";
+   my $url = shift   || confess "No URL!";
    my $only = shift  || '';
    my $type = shift  || 'GET';
 
@@ -478,7 +514,7 @@ sub _getHTTP {
       return $res->content;
    }
    else {
-      die $res->status_line;
+      confess $res->status_line;
    }
 }
 
@@ -486,8 +522,8 @@ sub _getHTTP {
 #-------------------------------------------------------------------------------
 sub _getJSON {
 #-------------------------------------------------------------------------------
-   my $obj = shift   || die "No Object!";
-   my $url = shift   || die "No URL!";
+   my $obj = shift   || confess "No Object!";
+   my $url = shift   || confess "No URL!";
    my $only = shift  || '';
    my $type = shift  || 'GET';
 
@@ -524,7 +560,7 @@ sub _getJSON {
          $json = eval{ decode_json($content) } || $json;
       }
       else {
-         die $res->status_line;
+         confess $res->status_line;
       }
    }
    if(ref $json eq 'ARRAY'){
@@ -544,7 +580,7 @@ sub _getJSON {
 #-------------------------------------------------------------------------------
 sub clearCache {
 #-------------------------------------------------------------------------------
-   my $obj = shift || die "No Object!";
+   my $obj = shift || confess "No Object!";
    my $entry = shift || '';
    
    $obj->{cache}->clear();

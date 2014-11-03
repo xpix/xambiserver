@@ -42,7 +42,7 @@
          <form>
             <fieldset class="ui-helper-reset">
                <label for="grpname">Groupname</label>
-               <input type="text" name="grpname" id="grpname" value="" class="ui-widget-content ui-corner-all">
+               <input type="text" name="grpname" id="grpname_id" value="" class="ui-widget-content ui-corner-all">
                <label for="grps_select">Content</label>
                <select name="grps_select" id="grps_select_id" size="5" multiple style="width:260px"></select>
             </fieldset>
@@ -136,7 +136,12 @@
                modal: true,
                buttons: {
                   Add: function() {
-                     addTab();
+                     // call addgroup with selected nodes
+                     if(confirm('This will add Sensors: ' + $("#grps_select_id").val() + ' to new Group: ' + $('#grpname_id').val())){
+                        $.getJSON( '<%= url_for 'geras' %>?sub=series_move_to_group&subparams=' + $('#grps_select_id').val() + ',' + $("#grpname_id").val(), function( data ) {
+console.log(data);
+                        });
+                     }
                      $( this ).dialog( "close" );
                   },
                   Cancel: function() {
@@ -221,8 +226,7 @@
 
             $(function () {
                $('.datetimepicker').datetimepicker({
-                  closeOnDateSelect: true,
-                  maxDate:'+1970/01/01',
+                  closeOnDateSelect: false,
                   onChangeDateTime : function(dp,input){
                      $('.selectBounds').trigger( 'change' );
                   },
@@ -254,6 +258,9 @@
                      dgurl += ( start=='' ? ',,' : ',') + (end/1000);
                      dsChart = new $.ig.DataSource({type: 'json', dataSource: dgurl,}).dataBind();
                      $("#chart-${sensor}").igDataChart( "option", "dataSource", dsChart);
+                     
+                     startolddate = startdate;
+                     endolddate  = enddate;
                   }
                });
 
@@ -261,10 +268,18 @@
                var axes = [{
                   type: "categoryX",
                   name: "xAxis",
-                  label: "Date",
+                  label: "Stamp",
                   stroke: "lightgray",
                   strokeThickness: 3,
-                  title: "Time"
+                  title: "Time",
+                  formatLabel: function (item) {  
+                        var datum = new Date(parseInt(item.Stamp) * 1000);
+                        var ret = datum.toDateString().replace(/\S+\s+(\S+)\s+(\d+).+/, "$2 $1");  
+                        ret += "\n";
+                        ret += datum.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
+  
+                        return ret;  
+                  },  
                }];
                var series = [];
                var axesPos = ['outsideRight', 'outsideLeft', 'outsideLeft', 'outsideLeft'];
