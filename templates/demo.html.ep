@@ -234,6 +234,8 @@ console.log(data);
                   },
                });
 
+							 var dsChart = {};
+
                var startolddate  = new Date();
                var endolddate    = new Date();
 
@@ -241,10 +243,10 @@ console.log(data);
                var rollup = 'avg';
                var interval = '1d';
 
-               dsChart = new $.ig.DataSource({
+               dsChart['${sensor}'] = new $.ig.DataSource({
                   type: "json",
                   dataSource: '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval,
-               }).dataBind();
+               });
 
                $('.selectBounds').on({
                   change: function (e) {
@@ -258,17 +260,18 @@ console.log(data);
                      var end = ( $('#endtime').val() ? enddate.getTime() : '');
 
                      if(startolddate.getTime() == startdate.getTime() && endolddate.getTime() == enddate.getTime()){
+console.log(startolddate, startdate, endolddate, enddate);
                         return;
                      }
                      
 
                      var dgurl = '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval;
                      if(start)
-                     dgurl += ',' + (start/1000);
+                     		dgurl += ',' + (start/1000);
                      if(end)
-                     dgurl += ( start=='' ? ',,' : ',') + (end/1000);
-                     dsChart = new $.ig.DataSource({type: 'json', dataSource: dgurl,}).dataBind();
-                     $("#chart-${sensor}").igDataChart( "option", "dataSource", dsChart);
+                     		dgurl += ( start=='' ? ',,' : ',') + (end/1000);
+                     dsChart['${sensor}'] = new $.ig.DataSource({type: 'json', dataSource: dgurl});
+                     $("#chart-${sensor}").igDataChart( "option", "dataSource", dsChart['${sensor}']);
                      
                      startolddate = startdate;
                      endolddate  = enddate;
@@ -323,7 +326,7 @@ console.log(data);
                }
 
                $("#chart-${sensor}").igDataChart({
-                  dataSource: dsChart,
+                  dataSource: dsChart['${sensor}'],
                   brushes: [ "gray", "blue", "green", "red", "brown" ],
                   width: "100%",
                   height: "450px",
