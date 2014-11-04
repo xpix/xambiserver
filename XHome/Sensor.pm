@@ -154,7 +154,19 @@ sub topic {
 sub value {
 #-------------------------------------------------------------------------------
    my $obj   = shift || die "No Object!";
-   $obj->{value} = $_[0] if(defined $_[0]);
+	my $val 	 = shift || undef;
+
+   if(defined $val){
+		# Check Value
+		my ($div, $min, $max) = ($obj->display->{divider}||1, $obj->display->{minimumValue}, $obj->display->{maximumValue});
+		my $value = $val / $div;
+		if($value > $min or $value < $max){
+			return $obj->error(sprintf("Value %s for Node %s are not correct! Value not between %s to %s!",
+										$val, $obj->topic, $min, $max));
+		}
+		$obj->{value} = $val;
+   }
+
    return $obj->{value};
 }
 
@@ -219,7 +231,6 @@ sub group {
    return $name if($notFull);
    return $grp;
 }
-
 
 #-------------------------------------------------------------------------------
 sub error {
