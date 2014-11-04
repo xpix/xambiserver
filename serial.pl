@@ -1,11 +1,11 @@
 #!/usr/bin/perl
 
-# This small example script shows how to do non-blocking
-# reads from a file handle.
+$ENV{CONFIGFILE} = 'cfg/sensors.cfg';
 
 use AnyEvent;
 use AnyEvent::SerialPort;
 use Geras::Api;
+use XHome::Sensor;
 
 print "Init ...\n";
 # Geras MQTT API
@@ -28,7 +28,7 @@ my $hdl =
 my @start_request; 
 @start_request = (line => sub {
    my ($hdl, $line) = @_;
-   warn $line;
+   warn $line if($line);
    handle_message($line);
    # push next request read, possibly from a nested callback
    $hdl->push_read (@start_request);
@@ -47,7 +47,9 @@ sub handle_message {
    my $PAYLOAD = [];
    
    my ($node, $paramsize, $milliVolt, @values) = split(/\s+/, $line);
+   return 0 if($node =~ /[a-z]+/i);
    return 0 if(not scalar @values);
+	return 0 if(not checkValues($node, $milliVolt, @values));
 
    # save milliVolt for sensor
    push($PAYLOAD, {
@@ -63,4 +65,19 @@ sub handle_message {
    }
 
    $geras->publish($PAYLOAD);   
+}
+
+sub checkValues {
+	my ($node, @values) = @_;
+	my $i = 0;
+
+	foreach my $idx (qw/power 0 1 2 3 4 5 6 7 8 9/){
+		my $sensor = XHome::Sensor->new({
+			topic => "/sensor/$node/$idx",
+		});
+		if(not defined $sensor->value($values[$i++])){
+			return 0;
+		}
+	}
+	return 1;
 }
