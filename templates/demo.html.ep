@@ -96,6 +96,8 @@
                }).dataBind();
 
                $('#' + dashboardId).igTileManager({
+                  columnWidth: '180px',
+                  columnHeight: '150px',
                   marginLeft: 10,
                   marginTop: 10,
                   rightPanelTilesWidth: 200,
@@ -232,13 +234,19 @@ console.log(data);
                   },
                });
 
+							 var dsChart = {};
+
+               var startolddate  = new Date();
+               var endolddate    = new Date();
+
+
                var rollup = 'avg';
                var interval = '1d';
 
-               dsChart = new $.ig.DataSource({
+               dsChart['${sensor}'] = new $.ig.DataSource({
                   type: "json",
                   dataSource: '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval,
-               }).dataBind();
+               });
 
                $('.selectBounds').on({
                   change: function (e) {
@@ -251,13 +259,19 @@ console.log(data);
                      var start = ( $('#starttime').val() ? startdate.getTime() : '');
                      var end = ( $('#endtime').val() ? enddate.getTime() : '');
 
+                     if(startolddate.getTime() == startdate.getTime() && endolddate.getTime() == enddate.getTime()){
+console.log(startolddate, startdate, endolddate, enddate);
+                        return;
+                     }
+                     
+
                      var dgurl = '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval;
                      if(start)
-                     dgurl += ',' + (start/1000);
+                     		dgurl += ',' + (start/1000);
                      if(end)
-                     dgurl += ( start=='' ? ',,' : ',') + (end/1000);
-                     dsChart = new $.ig.DataSource({type: 'json', dataSource: dgurl,}).dataBind();
-                     $("#chart-${sensor}").igDataChart( "option", "dataSource", dsChart);
+                     		dgurl += ( start=='' ? ',,' : ',') + (end/1000);
+                     dsChart['${sensor}'] = new $.ig.DataSource({type: 'json', dataSource: dgurl});
+                     $("#chart-${sensor}").igDataChart( "option", "dataSource", dsChart['${sensor}']);
                      
                      startolddate = startdate;
                      endolddate  = enddate;
@@ -274,7 +288,7 @@ console.log(data);
                   title: "Time",
                   formatLabel: function (item) {  
                         var datum = new Date(parseInt(item.Stamp) * 1000);
-                        var ret = datum.toDateString().replace(/\S+\s+(\S+)\s+(\d+).+/, "$2 $1");  
+                        var ret = datum.toDateString().replace(/\S+\s+(\S+)\s+(\d+).+/, "$2$1");  
                         ret += "\n";
                         ret += datum.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
   
@@ -312,7 +326,7 @@ console.log(data);
                }
 
                $("#chart-${sensor}").igDataChart({
-                  dataSource: dsChart,
+                  dataSource: dsChart['${sensor}'],
                   brushes: [ "gray", "blue", "green", "red", "brown" ],
                   width: "100%",
                   height: "450px",
@@ -321,6 +335,7 @@ console.log(data);
                   horizontalZoomable: true,
                   verticalZoomable: true,
                   axes: axes,
+                  displayType: "continuous",
                   series: series,
                   leftMargin: 5,
                   topMargin: 15
