@@ -49,6 +49,50 @@
          </form>
       </div>
 
+    <!-- Custom Tooltip Template -->
+    <script id="tooltipTemplatePower" type="text/x-jquery-tmpl">
+        <div style="color: #44ACD6">
+            <span>${item.Date}&nbsp;${item.Time}</span><br />
+            <span>Power: </span><span style="font-weight: bold">${item.Power}</span><br/>
+        </div>
+    </script>
+    <script id="tooltipTemplateValue0" type="text/x-jquery-tmpl">
+        <div style="color: #44ACD6">
+            <span>${item.Date}&nbsp;${item.Time}</span><br />
+            <span style="font-weight: bold">${item.Value0}</span><br/>
+        </div>
+    </script>
+    <script id="tooltipTemplateValue1" type="text/x-jquery-tmpl">
+        <div style="color: #44ACD6">
+            <span>${item.Date}&nbsp;${item.Time}</span><br />
+            <span style="font-weight: bold">${item.Value1}</span><br/>
+        </div>
+    </script>
+    <script id="tooltipTemplateValue2" type="text/x-jquery-tmpl">
+        <div style="color: #44ACD6">
+            <span>${item.Date}&nbsp;${item.Time}</span><br />
+            <span style="font-weight: bold">${item.Value2}</span><br/>
+        </div>
+    </script>
+    <script id="tooltipTemplateValue3" type="text/x-jquery-tmpl">
+        <div style="color: #44ACD6">
+            <span>${item.Date}&nbsp;${item.Time}</span><br />
+            <span style="font-weight: bold">${item.Value3}</span><br/>
+        </div>
+    </script>
+    <script id="tooltipTemplateValue4" type="text/x-jquery-tmpl">
+        <div style="color: #44ACD6">
+            <span>${item.Date}&nbsp;${item.Time}</span><br />
+            <span style="font-weight: bold">${item.Value4}</span><br/>
+        </div>
+    </script>
+    <script id="tooltipTemplateValue5" type="text/x-jquery-tmpl">
+        <div style="color: #44ACD6">
+            <span>${item.Date}&nbsp;${item.Time}</span><br />
+            <span style="font-weight: bold">${item.Value5}</span><br/>
+        </div>
+    </script>
+
       <script type="text/javascript">
          var config = <%== $config %>;
 
@@ -234,7 +278,7 @@ console.log(data);
                   },
                });
 
-							 var dsChart = {};
+                      var dsChart = {};
 
                var startolddate  = new Date();
                var endolddate    = new Date();
@@ -260,16 +304,15 @@ console.log(data);
                      var end = ( $('#endtime').val() ? enddate.getTime() : '');
 
                      if(startolddate.getTime() == startdate.getTime() && endolddate.getTime() == enddate.getTime()){
-console.log(startolddate, startdate, endolddate, enddate);
                         return;
                      }
                      
 
                      var dgurl = '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval;
                      if(start)
-                     		dgurl += ',' + (start/1000);
+                           dgurl += ',' + (start/1000);
                      if(end)
-                     		dgurl += ( start=='' ? ',,' : ',') + (end/1000);
+                           dgurl += ( start=='' ? ',,' : ',') + (end/1000);
                      dsChart['${sensor}'] = new $.ig.DataSource({type: 'json', dataSource: dgurl});
                      $("#chart-${sensor}").igDataChart( "option", "dataSource", dsChart['${sensor}']);
                      
@@ -321,6 +364,8 @@ console.log(startolddate, startdate, endolddate, enddate);
                      valueMemberPath: pfad,
                      isHighlightingEnabled: true,
                      isTransitionInEnabled: true,
+                     showTooltip: true,
+                     tooltipTemplate: 'tooltipTemplate' + pfad,
                      legend: { element: "legend-${sensor}" }
                   });
                }
@@ -353,7 +398,7 @@ console.log(startolddate, startdate, endolddate, enddate);
                $(function () {
                   var display = config.display['${type}'];
                   var vals = [${value.0.last}, ${value.1.last}, ${value.2.last}, ${value.3.last}, ${value.4.last}, ${value.5.last}, ${value.6.last}, ${value.7.last}, ${value.8.last}, ${value.9.last}];
-                  var vidx = (typeof display.valueidx == 'undefined' ? 0 : display.valueidx);
+                  var vidx = (typeof display.valueidx == 'undefined' ? 0 : parseInt(display.valueidx)+1 );
                   var calc = parseInt(vals[vidx] / display.divider);
                   var data = google.visualization.arrayToDataTable([
                   ['Label', 'Value'],

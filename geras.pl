@@ -62,7 +62,7 @@ dum( $geras->groups() );
 #dum( $geras->series_move_to_group('112,315', 'Wohnzimmer' ) );
 #dum( $geras->groups() );
 #printf "Remove series: 152 from groupname_second\n";
-#dum( $geras->series_remove_from_group(152, 'groupname_second' ) );
+#dum( $geras->series_remove_from_group(112, 'Wohnzimmer' ) );
 #dum( $geras->groups() );
 #printf "Remove all groups\n";
 #dum( $geras->groups_delete('groupname') );

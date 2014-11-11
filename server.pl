@@ -69,7 +69,7 @@ sub _timedata {
          $TYPES->{$item->{'n'}} = XHome::Sensor->new({topic => $item->{'n'}})
             unless(exists $TYPES->{$item->{'n'}});
          my $sensor = $TYPES->{$item->{'n'}};
-         $sdata->{$name} = $item->{'v'} / $sensor->display->{divider};
+         $sdata->{$name} = sprintf("%.3f", $item->{'v'} / $sensor->display->{divider});
       }
       push(@$return, $sdata);   
    };
