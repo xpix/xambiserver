@@ -144,10 +144,21 @@ get '/' => sub {
 
    my $conf = Config::General->new($ENV{CONFIGFILE});
    my %cfg = $conf->getall;
-   $c->stash( config => JSON::XS->new->utf8->encode( \%cfg ));
+
+   if(my ($user, $password) = split(/\:/, $c->req->url->to_abs->userinfo)){
+      my $login = 0;
+      map{ $login = 1 if($_ eq $user and $cfg{'user'}{$_}{'password'} eq $password); } keys %{$cfg{'user'}};
+
+      if($login){
+         # Render Content
+         $c->stash( config => JSON::XS->new->utf8->encode( \%cfg ));
+         return $c->render(template => 'demo');
+      }
+   }
    
-   # Render Content
-   $c->render(template => 'demo');
+   # Require authentication
+   $c->res->headers->www_authenticate('Basic');
+   $c->render(text => 'Authentication required!', status => 401);
 };
 
 
