@@ -236,7 +236,7 @@ console.log(data);
          <div class="optionContainer">
             Interval
             <br />
-            <select id="select-interval" class="selectBounds">
+            <select id="select-interval-${sensor}" class="selectBounds">
                <option value="1m">Minute</option>
                <option value="1h" selected="selected">Houre</option>
                <option value="1d">Day</option>
@@ -247,7 +247,7 @@ console.log(data);
          <div class="optionContainer">
             Rollup
             <br />
-            <select id="select-rollup" class="selectBounds">
+            <select id="select-rollup-${sensor}" class="selectBounds">
                <option value="avg" selected="selected">Average</option>
                <option value="sum">Sum</option>
                <option value="max">Max</option>
@@ -258,13 +258,13 @@ console.log(data);
          <div class="optionContainer">
             Start Time
             <br />
-            <input id="starttime" class="datetimepicker" type="text" >
+            <input id="starttime-${sensor}" class="datetimepicker" type="text" >
          </div>
 
          <div class="optionContainer">
             End Time
             <br />
-            <input id="endtime" class="datetimepicker" type="text" >
+            <input id="endtime-${sensor}" class="datetimepicker" type="text" >
          </div>
 
 
@@ -294,14 +294,14 @@ console.log(data);
 
                $('.selectBounds').on({
                   change: function (e) {
-                     var interval = $('#select-interval').val();
-                     var rollup   = $('#select-rollup').val();
+                     var interval = $('#select-interval-${sensor}').val();
+                     var rollup   = $('#select-rollup-${sensor}').val();
 
-                     var startdate= new Date($('#starttime').val());
-                     var enddate  = new Date($('#endtime').val());
+                     var startdate= new Date($('#starttime-${sensor}').val());
+                     var enddate  = new Date($('#endtime-${sensor}').val());
 
-                     var start = ( $('#starttime').val() ? startdate.getTime() : '');
-                     var end = ( $('#endtime').val() ? enddate.getTime() : '');
+                     var start = ( $('#starttime-${sensor}').val() ? startdate.getTime() : '');
+                     var end = ( $('#endtime-${sensor}').val() ? enddate.getTime() : '');
 
                      if(startolddate.getTime() == startdate.getTime() && endolddate.getTime() == enddate.getTime()){
                         return;
