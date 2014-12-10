@@ -296,7 +296,7 @@
 
 
                var rollup = 'avg';
-               var interval = '1d';
+               var interval = '1h';
 
                dsChart['${sensor}'] = new $.ig.DataSource({
                   type: "json",
@@ -349,7 +349,15 @@
                         return ret;  
                   },  
                }];
-               var series = [];
+               var series = [{
+                     type: "line",
+                     name: "Alarm",
+                     title: "Alarm level",
+                     xAxis: "xAxis",
+                     yAxis: 'axis-' + 'Plant',
+                     valueMemberPath: 'Alarm',
+                     legend: { element: "legend-${sensor}" }
+                  }];
                var axesPos = ['outsideRight', 'outsideLeft', 'outsideLeft', 'outsideLeft'];
                for(var i=0;i<possibleValues.length;i++){
                   axes.push({
@@ -383,7 +391,7 @@
 
                $("#chart-${sensor}").igDataChart({
                   dataSource: dsChart['${sensor}'],
-                  brushes: [ "gray", "blue", "green", "red", "brown" ],
+                  brushes: [ "darkred", "gray", "green", "blue", "brown" ],
                   width: "100%",
                   height: "450px",
                   title: "${name}",

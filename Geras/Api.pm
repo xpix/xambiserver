@@ -441,7 +441,9 @@ sub rollup {
 
    $url .= '&start='.$start   if($start);
    $url .= '&end='.$end       if($end);
-dum($url);
+   $url .= '&start='.(time - 2 * 24 * 3600)
+      if(not $start);
+
    $obj->_getJSON($url);
 }
 

@@ -70,6 +70,10 @@ sub _timedata {
             unless(exists $TYPES->{$item->{'n'}});
          my $sensor = $TYPES->{$item->{'n'}};
          $sdata->{$name} = sprintf("%.3f", $item->{'v'} / $sensor->display->{divider});
+
+         if(my $range = $sensor->{alarmobj}->range()){
+            $sdata->{'Alarm'} = $range->[0];
+         }
       }
       push(@$return, $sdata);   
    };

@@ -72,6 +72,17 @@ sub lastalarm {
    return $obj->{lastalarm} || 0;
 }
 
+#-------------------------------------------------------------------------------
+sub range {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || die "No Object!";
+   my $sensor = $obj->sensor;
+   my $cfg = $sensor->cfg;   
+   my $cfg_alarm = $cfg->{alarms}{$sensor->type}
+      or return;
+   return $cfg_alarm->{value};
+}
+
 
 #-------------------------------------------------------------------------------
 sub check {
@@ -79,11 +90,10 @@ sub check {
    my $obj   = shift || die "No Object!";
    my $value = shift;
 
-
    my $sensor = $obj->sensor;
    my $id = $obj->sensor->id;
    my $cfg = $sensor->cfg;   
-   my $cfg_alarm = $cfg->{alarms}{'Node_'.$sensor->id}
+   my $cfg_alarm = $cfg->{alarms}{$sensor->type}
       or return 1;
 
    # Change value to human readable format   
@@ -95,7 +105,7 @@ sub check {
    my $groupname = $sensor->group('notFull');
    my $msg = $cfg_alarm->{message};
    $msg =~ s/(\$\w+)/$1/eeg;
-die dum($msg, $sensor->config);
+
    if(defined $value and $value < $cfg_alarm->{value}->[0] and $value > $cfg_alarm->{value}->[1]){
       # Alarm if lastalarm - timetolive greather than actual time
       if($obj->lastalarm < (time - $cfg_alarm->{ttl})){
