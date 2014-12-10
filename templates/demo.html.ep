@@ -127,7 +127,7 @@
                var dashboardId = 'dashboard-' + tabCounter;
                var label = groupname.last().ucfirst();
                var id = "tabs-" + tabCounter;
-               var li = "<li><a href='#" + dashboardId + "'>" + label + "</a><span class='ui-icon ui-icon-close' style='position:absolute;top:2px;right:2px'>Remove Tab</span></li>";
+               var li = "<li><a href='#" + dashboardId + "'>" + label + "</a><span id='rmgrp_"+ id +"' grpname='" + groupname.last() + "'class='ui-icon ui-icon-close' style='position:absolute;top:2px;right:2px'>Remove Tab</span></li>";
 
                tabs.find( ".ui-tabs-nav" ).append( li );
                tabs.append( "<div class='dashboard' id='" + dashboardId + "'></div>" );
@@ -153,9 +153,20 @@
                      $('#' + dashboardId).find('ul').igTree();
                   },
                });
+
+               // -------- Remove Group ----------
+               $( "#rmgrp_" + id ).click(function(){
+                  if(confirm('You want remove Group: "' + $(this).attr('grpname') + '" and all Sensors move to "ungroup" group?' )){
+                     $.getJSON( '<%= url_for 'geras' %>?sub=groups_delete&subparams=' + $(this).attr('grpname'), function( data ) {
+                        location.reload();
+                     });
+                  }
+
+               });
+
+
             }
 
-            // -------- Add new Group ----------
             // Add new Group: Button -----------
             $( "#addgrp" ).button({
                icons: {
@@ -185,7 +196,7 @@
                      // call addgroup with selected nodes
                      if(confirm('This will add Sensors: ' + $("#grps_select_id").val() + ' to new Group: ' + $('#grpname_id').val())){
                         $.getJSON( '<%= url_for 'geras' %>?sub=series_move_to_group&subparams=' + $('#grps_select_id').val() + ',' + $("#grpname_id").val(), function( data ) {
-console.log(data);
+                           location.reload();
                         });
                      }
                      $( this ).dialog( "close" );

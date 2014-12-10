@@ -124,7 +124,7 @@ Mojo::IOLoop->recurring(1 => sub {
       push(@$EVENTS, $sensor);
       # Trigger via websocket or other 
       # to inform webpage for new Events
-
+      
    }
    $EVENTS = [];
 });

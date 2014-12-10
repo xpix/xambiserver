@@ -3,6 +3,8 @@ package XHome::Sensor;
 use warnings;
 use strict;
 
+use XHome::Alarm;
+
 use Config::General;
 
 
@@ -15,7 +17,7 @@ my $ERRORS;
 
 =head1 NAME
 
-XHome::Sensor - Module to get an sensor as object oriented 
+XHome::Sensor - Module to get an sensor as object oriented
 
 =head1 SYNOPSIS
 
@@ -30,12 +32,12 @@ XHome::Sensor - Module to get an sensor as object oriented
       value => $event->{value},
       geras => $geras,
    });
-   print 
+   print
       $sensorobj->type, # i.e. Temperature
       $sensorobj->now, # i.e. last value
       $sensorobj->id(), # i.e. 155
       $sensorobj->topic(), # i.e. /sensors/155/power
-   ;      
+   ;
 
 =head1 DESCRIPTION
 
@@ -58,6 +60,11 @@ sub new {
    $self->value( delete $args->{'value'} )   || 0;
    $self->geras( delete $args->{'geras'} )   || 0;
    $self->cfg(   delete $args->{'configfile'} || $ENV{CONFIGFILE} ) || die "Can't read config!";
+
+   # Alarmobject init
+   $self->{alarmobj} = XHome::Alarm->new({
+      sensor => $self,
+   }) or die "Cannot init XHome::Alarm";
 
    return $self;
 }
@@ -88,13 +95,13 @@ sub config {
    return $obj->cfg->{sensor}->{$obj->type};
 }
 
-# /sensors/315/power = 0; ../315/0 = 1 ... 
+# /sensors/315/power = 0; ../315/0 = 1 ...
 #-------------------------------------------------------------------------------
 sub idx {
 #-------------------------------------------------------------------------------
    my $obj   = shift || die "No Object!";
    my $lastChar = substr(lc $obj->valueid, -1); # /r or 0 or 1 or 2 ...
-   return ($lastChar eq 'r' ? 0 : int($lastChar)+1);   
+   return ($lastChar eq 'r' ? 0 : int($lastChar)+1);
 }
 
 #-------------------------------------------------------------------------------
@@ -160,7 +167,12 @@ sub value {
 		# Check Value
 		my ($div, $min, $max) = ($obj->display->{divider}||1, $obj->display->{minimumValue}, $obj->display->{maximumValue});
 		my $value = $val / $div;
-		if($value > $min or $value < $max){
+
+      # Check alarm status
+      $obj->{alarmobj}->check($value)
+         if(ref $obj->{alarmobj});
+
+		if($value < $min or $value > $max){
 			return $obj->error(sprintf("Value %s for Node %s are not correct! Value not between %s to %s!",
 										$val, $obj->topic, $min, $max));
 		}
@@ -243,7 +255,7 @@ sub error {
       if(not defined $ERRORS);
 
    push(@$ERRORS, $msg);
-   
+
    return undef;
 }
 
