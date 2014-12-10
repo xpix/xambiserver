@@ -96,6 +96,11 @@ sub check {
    my $cfg_alarm = $cfg->{alarms}{$sensor->type}
       or return 1;
 
+   # Test only on value in array if valueidx set
+   if($cfg_alarm->{idx} and $sensor->valueid != $cfg_alarm->{idx}){
+      return 0;
+   }
+
    # Change value to human readable format   
    if(exists $sensor->display->{'format'}){
       $value = sprintf($sensor->display->{'format'}, $value);

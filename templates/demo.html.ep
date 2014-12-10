@@ -354,7 +354,7 @@
                      name: "Alarm",
                      title: "Alarm level",
                      xAxis: "xAxis",
-                     yAxis: 'axis-' + 'Plant',
+                     yAxis: 'axis-' + possibleValues[1],
                      valueMemberPath: 'Alarm',
                      legend: { element: "legend-${sensor}" }
                   }];
