@@ -7,7 +7,9 @@ use Config::General;
 use Mail::SendEasy;
 
 use Data::Dumper;
-sub dum { "DEBUG: %s\n", Dumper(@_); };
+sub dum { warn sprintf("DEBUG: %s\n", Dumper(\@_)); };
+
+$ENV{ALARMFILE} = "cfg/alarms.cfg";
 
 my $ERRORS;
 #===============================================================================
@@ -68,8 +70,18 @@ sub sensor {
 sub lastalarm {
 #-------------------------------------------------------------------------------
    my $obj   = shift || die "No Object!";
-   $obj->{lastalarm} = $_[0] if(defined $_[0]);
-   return $obj->{lastalarm} || 0;
+
+   die "ENV{ALARMFILE} not set!" unless($ENV{ALARMFILE});
+   my $conf = Config::General->new($ENV{ALARMFILE});
+   my %config = $conf->getall;
+
+   if(defined $_[0]){
+      my $alarmtime = shift;
+
+      $config{'lastalarm'}{$obj->sensor->id} = $alarmtime;
+      $conf->save_file($ENV{ALARMFILE}, \%config);
+   }
+   return $config{'lastalarm'}{$obj->sensor->id} || 0;
 }
 
 #-------------------------------------------------------------------------------
@@ -93,8 +105,15 @@ sub check {
    my $sensor = $obj->sensor;
    my $id = $obj->sensor->id;
    my $cfg = $sensor->cfg;   
-   my $cfg_alarm = $cfg->{alarms}{$sensor->type}
-      or return 1;
+
+   # Check for alarm config or global (alarm for every Sensor i.e. Power) alarm config
+   my $cfg_alarm = $cfg->{alarms}{$sensor->type};
+   $cfg_alarm = (ref $cfg->{alarms}{$sensor->name} and $cfg->{alarms}{$sensor->name}{global} eq 'yes' ? $cfg->{alarms}{$sensor->name} : $cfg_alarm);
+   return 0 if(not $cfg_alarm);
+dum($cfg_alarm);   
+   if(exists $cfg_alarm->{name} and $cfg_alarm->{name} ne $sensor->name){
+      return 1;
+   }
 
    # Change value to human readable format   
    if(exists $sensor->display->{'format'}){
@@ -110,8 +129,9 @@ sub check {
       # Alarm if lastalarm - timetolive greather than actual time
       if($obj->lastalarm < (time - $cfg_alarm->{ttl})){
          # Send via types
-         foreach my $type (@{$cfg_alarm->{type}}){
-            $obj->$type($msg);
+         my $alarms = (ref $cfg_alarm->{type} eq 'ARRAY' ? $cfg_alarm->{type} : [$cfg_alarm->{type}]);
+         foreach my $type (@$alarms){
+            eval{ $obj->$type($msg) };
          }
          $obj->lastalarm( time ); # set last alarm timepoint
       }

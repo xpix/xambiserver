@@ -74,6 +74,7 @@ sub checkValues {
 	foreach my $idx (qw/power 0 1 2 3 4 5 6 7 8 9/){
 		my $sensor = XHome::Sensor->new({
 			topic => "/sensor/$node/$idx",
+			geras => $geras,
 		});
 		if(not defined $sensor->value($values[$i++])){
 			return 0;

@@ -15,19 +15,17 @@ my $geras = Geras::Api->new({
 });
 
 my $sensor = XHome::Sensor->new({
-   topic => '/sensors/315/0',
+   topic => '/sensors/315/power',
    geras => $geras,
 });
 
-
-
-dum( $sensor->value(100) );
-dum( $sensor->info );
-dum( $sensor->group );
-dum( $sensor->type );
-dum( $sensor->topic );
-dum( $sensor->id );
-dum( $sensor->when );
-dum( $sensor->value );
+dum( $sensor->value(1523) );
+#dum( $sensor->info );
+#dum( $sensor->group );
+#dum( $sensor->type );
+#dum( $sensor->topic );
+#dum( $sensor->id );
+#dum( $sensor->when );
+#dum( $sensor->value );
 
 exit;
