@@ -2,10 +2,16 @@
 
 $ENV{CONFIGFILE} = 'cfg/sensors.cfg';
 
+use strict;
+use warnings;
+
 use AnyEvent;
 use AnyEvent::SerialPort;
 use Geras::Api;
 use XHome::Sensor;
+
+use Data::Dumper;
+sub dum { warn sprintf("DEBUG: %s\n", Dumper(@_)); };
 
 print "Init ...\n";
 # Geras MQTT API
@@ -70,15 +76,18 @@ sub handle_message {
 sub checkValues {
 	my ($node, @values) = @_;
 	my $i = 0;
-
-	foreach my $idx (qw/power 0 1 2 3 4 5 6 7 8 9/){
+   foreach my $value (@values){ 
+	   my $indexer = ($i==0 ? 'power' : $i-1);
+      my $topic = "/sensor/$node/$indexer";
 		my $sensor = XHome::Sensor->new({
-			topic => "/sensor/$node/$idx",
+			topic => $topic,
 			geras => $geras,
 		});
-		if(not defined $sensor->value($values[$i++])){
+print "$topic => $value\n";
+		if(not defined $sensor->value($value)){
 			return 0;
 		}
+      $i++;
 	}
 	return 1;
 }
