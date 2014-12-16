@@ -9,7 +9,8 @@ use Mail::SendEasy;
 use Data::Dumper;
 sub dum { warn sprintf("DEBUG: %s\n", Dumper(\@_)); };
 
-$ENV{ALARMFILE} = "cfg/alarms.cfg";
+$ENV{LASTALARMS} = "cfg/lastalarms.cfg";
+$ENV{ALARMS}     = "cfg/alarms.cfg";
 
 my $ERRORS;
 #===============================================================================
@@ -17,7 +18,7 @@ my $ERRORS;
 
 =head1 NAME
 
-XHome::Alarm - Module to set alarm level and call alarm, 
+XHome::Alarm - Module to set alarm level and call alarm,
 alarms and types are defined in config file:
 
    <alarmtype MAIL>
@@ -35,7 +36,7 @@ alarms and types are defined in config file:
    $sensorobj->check(); # check if alaram happend
 
    $sensorobj->alarm(); # call alarm
-   
+  
 
 =head1 DESCRIPTION
 
@@ -55,6 +56,9 @@ sub new {
    # API Data
    $self->sensor( delete $args->{'sensor'} )   || die "No Sensor obj in new!";
 
+   # Load Configuration
+   $self->cfg($ENV{ALARMS});
+     
    return $self;
 }
 
@@ -71,15 +75,15 @@ sub lastalarm {
 #-------------------------------------------------------------------------------
    my $obj   = shift || die "No Object!";
 
-   die "ENV{ALARMFILE} not set!" unless($ENV{ALARMFILE});
-   my $conf = Config::General->new($ENV{ALARMFILE});
+   die "ENV{ALARMFILE} not set!" unless($ENV{LASTALARMS});
+   my $conf = Config::General->new($ENV{LASTALARMS});
    my %config = $conf->getall;
 
    if(defined $_[0]){
       my $alarmtime = shift;
 
       $config{'lastalarm'}{$obj->sensor->id} = $alarmtime;
-      $conf->save_file($ENV{ALARMFILE}, \%config);
+      $conf->save_file($ENV{LASTALARMS}, \%config);
    }
    return $config{'lastalarm'}{$obj->sensor->id} || 0;
 }
@@ -89,7 +93,7 @@ sub range {
 #-------------------------------------------------------------------------------
    my $obj   = shift || die "No Object!";
    my $sensor = $obj->sensor;
-   my $cfg = $sensor->cfg;   
+   my $cfg = $obj->cfg;  
    my $cfg_alarm = $cfg->{alarms}{$sensor->type}
       or return;
    return $cfg_alarm->{value};
@@ -104,7 +108,7 @@ sub check {
 
    my $sensor = $obj->sensor;
    my $id = $obj->sensor->id;
-   my $cfg = $sensor->cfg;   
+   my $cfg = $obj->cfg;  
 
    # Check for alarm config or global (alarm for every Sensor i.e. Power) alarm config
    my $cfg_alarm = $cfg->{alarms}{$sensor->type};
@@ -120,7 +124,7 @@ sub check {
       return 0;
    }
 
-   # Change value to human readable format   
+   # Change value to human readable format  
    if(exists $sensor->display->{'format'}){
       $value = sprintf($sensor->display->{'format'}, $value);
    }
@@ -151,9 +155,9 @@ sub SMS {
    my $obj   = shift || die "No Object!";
    my $msg   = shift || die "No Message!";
 
-   my $cfg   = $obj->sensor->cfg->{alarmtype}->{SMS}
+   my $cfg   = $obj->cfg->{alarmtype}->{SMS}
       or die "Can't find alarm configuration for type: SMS!";
-   
+  
    my $url = sprintf('https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json', $cfg->{account_sid});
    my $curl = sprintf(
       "curl -s -X POST %s --data-urlencode 'To=%s'  --data-urlencode 'From=%s'  --data-urlencode 'Body=%s' -u %s:%s",
@@ -168,7 +172,7 @@ sub MAIL {
    my $obj   = shift || die "No Object!";
    my $msg   = shift || die "No Message!";
 
-   my $cfg   = $obj->sensor->cfg->{alarmtype}->{MAIL}
+   my $cfg   = $obj->cfg->{alarmtype}->{MAIL}
       or die "Can't find alarm configuration for type: MAIL!";
 
    my $mail = Mail::SendEasy->new(
@@ -176,7 +180,7 @@ sub MAIL {
      port => $cfg->{port},
      user => $cfg->{user},
      pass => $cfg->{pass},
-   );      
+   );     
 
    my $status = $mail->send(
      from    => $cfg->{from},
@@ -216,7 +220,7 @@ sub error {
       if(not defined $ERRORS);
 
    push(@$ERRORS, $msg);
-   
+  
    return undef;
 }
 
