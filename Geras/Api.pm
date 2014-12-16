@@ -13,7 +13,7 @@ use IPC::ShareLite qw( :lock );
 use CHI;
 
 use Data::Dumper;
-sub dum { printf "DEBUG: %s\n", Dumper(@_); };
+sub dum { warn Dumper(@_) };
 
 my $timeWindow = {
    s => 1, # second
@@ -118,9 +118,12 @@ sub publish {
       });
 
       # ok, ugly solution but it works :)
-      my $erg = `/usr/bin/mosquitto_pub -u "" -P "$obj->{apikey}" -h $obj->{host} -t $topic -m "$value"; echo \$?`;
+      my $mosquito = sprintf('/usr/bin/mosquitto_pub -u "" -P "%s" -h %s -t %s -m "%s"', 
+         $obj->{apikey}, $obj->{host}, $topic, $value);
+      my $erg = `$mosquito; echo \$?`;
       chomp $erg;
-      warn "Call failed for topic: $topic with value: $value" if($erg != 0);
+      $obj->error("Call failed for topic: $topic with value: $value") 
+         if($erg != 0);
    }
 
    $obj->{share}->lock( LOCK_EX|LOCK_NB );
@@ -249,8 +252,6 @@ sub series_add_to_group {
 
    $group = $obj->groups($group)
       or $obj->groups_new($group, []);
-
-dum($group);
 
    my($groupname, $groupvalues) = each(%$group);
    push(@$groupvalues, @$serie); 
@@ -547,7 +548,6 @@ sub _getJSON {
       $json = decode_json($cached);
    }
    else {
-      warn "$type: $url";
       my $ua = LWP::UserAgent->new();
       $ua->env_proxy();
       my $req = HTTP::Request->new($type, $url);
@@ -561,7 +561,6 @@ sub _getJSON {
       my $res = $ua->request($req);
       if($res->is_success){
          my $content = $res->content;
-         warn "Content: $content";
          $obj->{cache}->set($url, $content)
             if($type eq 'GET');
          $json = eval{ decode_json($content) } || $json;

@@ -2,12 +2,18 @@
 
 $ENV{CONFIGFILE} = 'cfg/sensors.cfg';
 
+use strict;
+use warnings;
+
 use AnyEvent;
 use AnyEvent::SerialPort;
 use Geras::Api;
 use XHome::Sensor;
 
-print "Init ...\n";
+use Data::Dumper;
+sub dum { warn sprintf("DEBUG: %s\n", Dumper(@_)); };
+
+print STDERR "Init ...\n";
 # Geras MQTT API
 my $geras = Geras::Api->new({
    apikey => '9ca6362e6051ec2588074f23a7fb7afe',
@@ -28,7 +34,8 @@ my $hdl =
 my @start_request; 
 @start_request = (line => sub {
    my ($hdl, $line) = @_;
-   warn $line if($line);
+   printf STDERR "%s %s\n", scalar localtime(), $line 
+      if($line);
    handle_message($line);
    # push next request read, possibly from a nested callback
    $hdl->push_read (@start_request);
@@ -70,14 +77,17 @@ sub handle_message {
 sub checkValues {
 	my ($node, @values) = @_;
 	my $i = 0;
-
-	foreach my $idx (qw/power 0 1 2 3 4 5 6 7 8 9/){
+   foreach my $value (@values){ 
+	   my $indexer = ($i==0 ? 'power' : $i-1);
+      my $topic = "/sensor/$node/$indexer";
 		my $sensor = XHome::Sensor->new({
-			topic => "/sensor/$node/$idx",
+			topic => $topic,
+			geras => $geras,
 		});
-		if(not defined $sensor->value($values[$i++])){
+		if(not defined $sensor->value($value)){
 			return 0;
 		}
+      $i++;
 	}
 	return 1;
 }

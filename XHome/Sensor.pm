@@ -9,7 +9,7 @@ use Config::General;
 
 
 use Data::Dumper;
-sub dum { "DEBUG: %s\n", Dumper(@_); };
+sub dum { warn sprintf("DEBUG: %s\n", Dumper(@_)); };
 
 my $ERRORS;
 #===============================================================================
@@ -54,9 +54,11 @@ sub new {
 
    bless($self, $class);
 
+   my $time = time;
+
    # API Data
    $self->topic( delete $args->{'topic'} )   || die "No Topic in new!";
-   $self->when ( delete $args->{'when'}  )   || time;
+   $self->when ( delete $args->{'when'} || $time );
    $self->value( delete $args->{'value'} )   || 0;
    $self->geras( delete $args->{'geras'} )   || 0;
    $self->cfg(   delete $args->{'configfile'} || $ENV{CONFIGFILE} ) || die "Can't read config!";
@@ -174,7 +176,7 @@ sub value {
 
 		if($value < $min or $value > $max){
 			return $obj->error(sprintf("Value %s for Node %s are not correct! Value not between %s to %s!",
-										$val, $obj->topic, $min, $max));
+										$value, $obj->topic, $min, $max));
 		}
 		$obj->{value} = $val;
    }
