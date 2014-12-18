@@ -1,0 +1,70 @@
+         <div style="width:99%; height:120" ><!-- Start Big Div -->
+            <img src="images/${info.config.Image}" style="position:absolute;top:5px;left:5px;">
+            <div id="minimizedBox-${sensor}" style="float:left;width:100;height:100"></div>
+            <script type="text/javascript">
+               $(function () {
+                  var display = config.display['${type}'];
+                  var vals = [${value.0.last}, ${value.1.last}, ${value.2.last}, ${value.3.last}, ${value.4.last}, ${value.5.last}, ${value.6.last}, ${value.7.last}, ${value.8.last}, ${value.9.last}];
+                  var vidx = (typeof display.valueidx == 'undefined' ? 0 : parseInt(display.valueidx) );
+
+                  if(display.minType == 'gauge'){
+                     var calc = parseInt(vals[vidx] / display.divider);
+                     var data = google.visualization.arrayToDataTable([
+                        ['Label', 'Value'],
+                        ['${type}', calc ],
+                     ]);
+   
+                     var options = {
+                        width: 120, height: 120,
+                        redFrom: display.redFrom, redTo: display.redTo,
+                        yellowFrom:display.yellowFrom, yellowTo: display.yellowTo,
+                        greenFrom:display.greenFrom, greenTo: display.greenTo,
+                        min:display.minimumValue, max:display.maximumValue,
+                        minorTicks: 5
+                     };
+   
+                     var chart = new google.visualization.Gauge(document.getElementById('minimizedBox-${sensor}'));
+                     chart.draw(data, options);
+                  }
+                  if(display.minType == 'switch'){
+                     var div = document.getElementById('minimizedBox-${sensor}');
+                     div.innerHTML = "<img src='images/" + (vals[vidx]==1 ? display.ImageOn : display.ImageOff) + "' title='Letterbox are " + (vals[vidx]==1 ? 'full' : 'empty') + "'>";
+                  }
+               });
+            </script>
+
+            <div id="bulletgraph-${sensor}"></div>
+         </div><!-- End Big Div -->
+
+         <script type="text/javascript">
+            $(function () {
+               var $bulletGraph = $("#bulletgraph-${sensor}");
+               $bulletGraph.igBulletGraph({
+                  height: "110px",
+                  width:  "20px",
+                  orientation: "vertical",
+                  value: ((${power}-2000)/(3300 - 2000)) * 100,
+                  labelsPreTerminal: 101,
+                  maximumValue: 100,
+                  labelInterval: 50,
+                  minorTickCount: 0,
+                  ranges: [
+                  {
+                     name: 'bad',
+                     startValue: 0,
+                     endValue: 30
+                  },
+                  {
+                     name: 'acceptable',
+                     startValue: 30,
+                     endValue: 60
+                  },
+                  {
+                     name: 'good',
+                     startValue: 60,
+                     endValue: 100
+                  }
+                  ]
+               });
+            });
+         </script>

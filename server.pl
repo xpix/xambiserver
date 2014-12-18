@@ -155,7 +155,10 @@ get '/' => sub {
 
       if($login){
          # Render Content
-         $c->stash( config => JSON::XS->new->utf8->encode( \%cfg ));
+         $c->stash( 
+            config => JSON::XS->new->utf8->encode( \%cfg ),
+            perl_cfg => \%cfg,   
+         );
          return $c->render(template => 'demo');
       }
    }
