@@ -248,7 +248,8 @@ sub series_add_to_group {
    my $group =shift || confess "No Group to add to group!";
 
    ($serie) = $obj->series($serie)
-      or return $obj->error("Can't find serie $serie!");
+      or return $obj->error("Can't find serie $serie!")
+         if(not ref $serie eq 'ARRAY');
 
    $group = $obj->groups($group)
       or $obj->groups_new($group, []);
@@ -302,6 +303,9 @@ sub series_move_to_group {
       # Try to find serie in an old group ..   
       my $sourceGroupName = $obj->series_group($serie);
    
+      # Return if group the same
+      return if($group eq $obj->group_name($sourceGroupName));
+   
       # remove from old group ...
       if($sourceGroupName){
          $obj->series_remove_from_group($serie, $sourceGroupName);
@@ -315,7 +319,7 @@ sub series_move_to_group {
    }
    else {
       # ... and add to new group
-      $obj->series_add_to_group($series, $targetGroup);
+      $obj->series_add_to_group($series, keys %$targetGroup);
    }      
 
 }

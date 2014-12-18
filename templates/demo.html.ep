@@ -44,7 +44,7 @@
                <label for="grpname">Groupname</label>
                <input type="text" name="grpname" id="grpname_id" value="" class="ui-widget-content ui-corner-all">
                <label for="grps_select">Content</label>
-               <select name="grps_select" id="grps_select_id" size="5" multiple style="width:260px"></select>
+               <select name="grps_select" id="grps_select_id" size="5" style="width:260px"></select>
             </fieldset>
          </form>
       </div>
@@ -233,15 +233,15 @@
          });
       </script>
 
+      <textarea id="minimizedState" style="display:none">
+          %= include 'helper/minimizeState'
+      </textarea>
 
       <textarea id="maximizedState" style="display:none">
-          %= include 'helper-maximizeState'
+          %= include 'helper/maximizeState'
       </textarea>
 
 
-      <textarea id="minimizedState" style="display:none">
-          %= include 'helper-minimizeState'
-      </textarea>
 
       <div class="modal"></div>
    </body>

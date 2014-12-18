@@ -8,8 +8,6 @@ my $geras = Geras::Api->new({
    host   => 'geras.1248.io',
 });
 
-$ENV{CONFIGFILE} = 'xambiserver/cfg/sensors.cfg';
-
 $geras->clearCache();
 
 # Publish
@@ -50,7 +48,7 @@ $geras->clearCache();
 #dum( $geras->groups('Arbeitszimmer') );
 #dum( $geras->groups() );
 #dum( $geras->groups_delete('/group/5zn8tpvdw3/unknown') );
-#dum( $geras->groups_delete('Wohnzimmer') );
+dum( $geras->groups_delete('Garten') );
 #dum( $geras->groups() );
 
 # Funtions
@@ -59,8 +57,10 @@ $geras->clearCache();
 #dum( $geras->groups() );
 #printf "Move series: 152 to groupname_second\n";
 dum( $geras->groups() );
-#dum( $geras->series_move_to_group('112,315', 'Wohnzimmer' ) );
-#dum( $geras->groups() );
+dum( $geras->series_move_to_group('155', 'Garten' ) );
+dum( $geras->groups() );
+dum( $geras->series_move_to_group('400', 'Garten' ) );
+dum( $geras->groups() );
 #printf "Remove series: 152 from groupname_second\n";
 #dum( $geras->series_remove_from_group(112, 'Wohnzimmer' ) );
 #dum( $geras->groups() );

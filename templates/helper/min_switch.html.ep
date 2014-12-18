@@ -1,0 +1,6 @@
+                     var div = document.getElementById('minimizedBox-${sensor}');
+                     div.innerHTML = "<img src='images/" 
+                        + (vals[vidx]==1 ? display.ImageOn : display.ImageOff) 
+                        + "' title='Letterbox are " 
+                        + (vals[vidx]==1 ? 'full' : 'empty') 
+                        + "'>";

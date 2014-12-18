@@ -1,0 +1,17 @@
+                     var calc = parseInt(vals[vidx] / display.divider);
+                     var data = google.visualization.arrayToDataTable([
+                        ['Label', 'Value'],
+                        ['${type}', calc ],
+                     ]);
+   
+                     var options = {
+                        width: 120, height: 120,
+                        redFrom: display.redFrom, redTo: display.redTo,
+                        yellowFrom:display.yellowFrom, yellowTo: display.yellowTo,
+                        greenFrom:display.greenFrom, greenTo: display.greenTo,
+                        min:display.minimumValue, max:display.maximumValue,
+                        minorTicks: 5
+                     };
+   
+                     var chart = new google.visualization.Gauge(document.getElementById('minimizedBox-${sensor}'));
+                     chart.draw(data, options);
