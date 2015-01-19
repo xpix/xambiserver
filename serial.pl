@@ -13,7 +13,7 @@ use XHome::Sensor;
 use Data::Dumper;
 sub dum { warn sprintf("DEBUG: %s\n", Dumper(@_)); };
 
-print "Init ...\n";
+print STDERR "Init ...\n";
 # Geras MQTT API
 my $geras = Geras::Api->new({
    apikey => '9ca6362e6051ec2588074f23a7fb7afe',
@@ -34,7 +34,8 @@ my $hdl =
 my @start_request; 
 @start_request = (line => sub {
    my ($hdl, $line) = @_;
-   warn $line if($line);
+   printf STDERR "%s %s\n", scalar localtime(), $line 
+      if($line);
    handle_message($line);
    # push next request read, possibly from a nested callback
    $hdl->push_read (@start_request);
@@ -83,7 +84,6 @@ sub checkValues {
 			topic => $topic,
 			geras => $geras,
 		});
-print "$topic => $value\n";
 		if(not defined $sensor->value($value)){
 			return 0;
 		}

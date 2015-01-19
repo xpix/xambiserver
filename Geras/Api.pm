@@ -13,7 +13,7 @@ use IPC::ShareLite qw( :lock );
 use CHI;
 
 use Data::Dumper;
-sub dum { warn "DEBUG: %s\n", Dumper(@_); };
+sub dum { warn Dumper(@_) };
 
 my $timeWindow = {
    s => 1, # second
