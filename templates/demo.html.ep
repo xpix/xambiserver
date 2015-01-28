@@ -133,7 +133,6 @@
                tabs.append( "<div class='dashboard' id='" + dashboardId + "'></div>" );
                tabs.tabs( "refresh" );
 
-
                var ds = new $.ig.DataSource({
                   type: "json",
                   dataSource: '/geras?sub=groups&type=sensorgrp&subparams=' + group
