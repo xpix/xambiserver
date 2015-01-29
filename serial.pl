@@ -85,7 +85,7 @@ sub checkValues {
 			geras => $geras,
 		});
 		if(not defined $sensor->value($value)){
-			return 0;
+			# return 0;
 		}
       $i++;
 	}

@@ -165,9 +165,9 @@ sub value {
    my $obj   = shift || die "No Object!";
 	my $val 	 = shift || undef;
 
-   if(defined $val){
+   if(defined $val and ref $obj->display eq 'HASH'){
 		# Check Value
-		my ($div, $min, $max) = ($obj->display->{divider}||1, $obj->display->{minimumValue}, $obj->display->{maximumValue});
+		my ($div, $min, $max) = ($obj->display->{divider}, $obj->display->{minimumValue}, $obj->display->{maximumValue});
 		my $value = $val / $div;
 
       # Check alarm status

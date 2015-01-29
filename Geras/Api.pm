@@ -120,6 +120,7 @@ sub publish {
       # ok, ugly solution but it works :)
       my $mosquito = sprintf('/usr/bin/mosquitto_pub -u "" -P "%s" -h %s -t %s -m "%s"', 
          $obj->{apikey}, $obj->{host}, $topic, $value);
+
       my $erg = `$mosquito; echo \$?`;
       chomp $erg;
       $obj->error("Call failed for topic: $topic with value: $value") 
