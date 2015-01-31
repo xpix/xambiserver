@@ -5,6 +5,10 @@ use strict;
 use warnings;
 use FileHandle;
 
+my ($host, $port) = @ARGV;
+$host //= 'localhost';
+$port //= 1883;
+
 local $| = 1;
 printf "Start MQTT Logging\n";
 
@@ -17,7 +21,7 @@ my $dbh = DBI->connect("DBI:SQLite:dbname=$database", "", "", {'RaiseError' => 1
 
 create_table() if(not -s $database);
 
-my $subclient = "/usr/bin/mosquitto_sub -v -t /#";
+my $subclient = "/usr/bin/mosquitto_sub -h $host -p $port -v -t /#";
 printf "Start mqtt client: $subclient\n";
 open(SUB, "$subclient|");
 SUB->autoflush(1);
