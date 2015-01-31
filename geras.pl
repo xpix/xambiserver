@@ -31,22 +31,12 @@ $geras->clearCache();
 #dum( $geras->lastvalue('/sensors/155/power') );
 #dum( $geras->rollup('/sensors/155/power','min','1d') );
 #dum( $geras->rollup('/sensors/155/power','max','1d') );
-#dum( $geras->timewindow('/sensors/155/power',1410338021,1410338081) );# 1min
-#dum( $geras->timewindow('/sensors/155/power','30s') );# 30sec
-#dum( $geras->timewindow('/sensors/155/power','1m') );# 1min
-
-#
-## Shares
-#dum( $geras->shares() );
-#dum( $geras->shares('writeonly') );
-#dum( $geras->series_delete('/sensors/152/power') );
-#dum( $geras->share_delete('/d123p432/myshare') );
 
 # Groups
 #dum( $geras->groups_new('Arbeitszimmer', ['/sensors/155/power', '/sensors/155/0', '/sensors/155/1']) );
 #dum( $geras->groups_new('groupname_second', []) );
 #dum( $geras->groups('Arbeitszimmer') );
-#dum( $geras->groups() );
+dum( $geras->groups() );
 #dum( $geras->groups_delete('/group/5zn8tpvdw3/unknown') );
 #dum( $geras->groups_delete('Garten') );
 #dum( $geras->groups() );
@@ -56,7 +46,7 @@ $geras->clearCache();
 #dum( $geras->series_add_to_group(152, 'groupname' ) );
 #dum( $geras->groups() );
 #printf "Move series: 152 to groupname_second\n";
-dum( $geras->groups('/group/5zn8tpvdw3/Garten') );
+#dum( $geras->groups('/group/5zn8tpvdw3/Garten') );
 #dum( $geras->series_move_to_group('155', 'Garten' ) );
 #dum( $geras->groups() );
 #dum( $geras->series_move_to_group('400', 'Garten' ) );
