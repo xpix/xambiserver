@@ -5,8 +5,8 @@ use strict;
 use warnings;
 use FileHandle;
 
-use JSON;
-my $json = JSON->new;
+use JSON::XS;
+my $json = JSON::XS->new;
 
 my ($host, $port, $apikey) = @ARGV;
 $host //= 'localhost';
