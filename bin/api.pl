@@ -197,8 +197,10 @@ get '/:topic/addtogroup/:group' => sub {
    $topic = "/sensors/$topic";
    my $topics = $self->topics($topic, 'distinct');
    my $erg    = $self->sql("DELETE FROM $groupstable WHERE TOPICNAME LIKE '$topic%'");
-   foreach my $topic (@{$topics->[0]}){
-      my $erg    = $self->sql("REPLACE INTO $groupstable (GROUPNAME, TOPICNAME) VALUES ('$group','$topic->[0]')");
+   if(lc $group ne 'unknown'){
+      foreach my $topic (@{$topics->[0]}){
+         my $erg    = $self->sql("REPLACE INTO $groupstable (GROUPNAME, TOPICNAME) VALUES ('$group','$topic->[0]')");
+      }
    }
    return $self->render(json => {result => 1, message => "Topic with id $topic added to group $group"});
 };

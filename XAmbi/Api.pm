@@ -245,18 +245,10 @@ sub series_add_to_group {
    my $serie =shift || confess "No Serie to add to group!";
    my $group =shift || confess "No Group to add to group!";
 
-   ($serie) = $obj->series($serie)
-      or return $obj->error("Can't find serie $serie!")
-         if(not ref $serie eq 'ARRAY');
+   my $test = $obj->series($serie)
+      or return $obj->error("Can't find serie $serie!");
 
-   $group = $obj->groups($group)
-      or $obj->groups_new($group, []);
-
-   my($groupname, $groupvalues) = each(%$group);
-   push(@$groupvalues, @$serie); 
-   $groupname = (split('/', $groupname))[-1];
-   
-   $obj->groups_new($groupname, $groupvalues); 
+   $obj->_getJSON("/$serie/addtogroup/$group", undef, undef, 'noextract');
 }
 
 #-------------------------------------------------------------------------------
@@ -264,27 +256,8 @@ sub series_remove_from_group {
 #-------------------------------------------------------------------------------
    my $obj = shift || confess "No Object!";
    my $serie =shift || confess "No Serie to delete!";
-   my $group =shift || confess "No Serie to delete!";
 
-   my $serieHash;
-   my $series = $obj->series($serie)
-      or return $obj->error("Can't find serie $serie!");
-
-   map {$serieHash->{$_} = 1} @$series;
-   
-   ($group) = $obj->groups($group)
-      or return $obj->error("Can't find group $group!");
-
-   my($groupname, $groupvalues) = each(%$group);
-   $groupname = (split('/', $groupname))[-1];
-
-   my $newGroupValues = [];
-   foreach my $groupvalue (@$groupvalues){
-      push(@$newGroupValues, $groupvalue) 
-         if(not exists $serieHash->{$groupvalue});
-   }
-   
-   $obj->groups_new($groupname, $newGroupValues); 
+   $obj->_getJSON("/$serie/addtogroup/Unknown", undef, undef, 'noextract');
 }
 
 #-------------------------------------------------------------------------------
@@ -294,32 +267,8 @@ sub series_move_to_group {
    my $seriestag =shift || confess "No Serietag to move!";
    my $group =shift || confess "No Serie to move!";
 
-   my ($series) = $obj->series($seriestag)
-      or return $obj->error("Can't find serie $seriestag!");
-   
-   foreach my $serie (@$series){
-      # Try to find serie in an old group ..   
-      my $sourceGroupName = $obj->series_group($serie);
-   
-      # Return if group the same
-      return if($group eq $obj->group_name($sourceGroupName));
-   
-      # remove from old group ...
-      if($sourceGroupName){
-         $obj->series_remove_from_group($serie, $sourceGroupName);
-      }
-   }
-
-   my ($targetGroup) = $obj->groups($group);
-   if(not $targetGroup){
-         # .. create new group with series
-      $obj->groups_new($group, $series);
-   }
-   else {
-      # ... and add to new group
-      $obj->series_add_to_group($series, keys %$targetGroup);
-   }      
-
+   # ... and add to group
+   $obj->series_add_to_group($seriestag, $group);
 }
 
 #-------------------------------------------------------------------------------
@@ -355,32 +304,14 @@ sub groups {
 }
 
 #-------------------------------------------------------------------------------
-sub group_name {
+sub groups_new {
 #-------------------------------------------------------------------------------
    my $obj = shift || confess "No Object!";
    my $group   =shift || return '';
 
-   my @tokens = split(/\//, $group);
-   return $tokens[-1];
+   my $data = $obj->_getJSON("/group/add/$group", undef, undef, 'noextract');
 }
 
-
-#-------------------------------------------------------------------------------
-sub groups_new {
-#-------------------------------------------------------------------------------
-   my $obj = shift || confess "No Object!";
-   my $name = shift || confess "No Name!";
-   my $list = shift || [];
-
-
-   my $data = {
-      group_id => $name,
-      list => $list,
-   };
-   
-   $obj->{cache}->clear();
-   $obj->_getJSON('/group', $data, 'POST');
-}
 
 #-------------------------------------------------------------------------------
 sub groups_delete {
@@ -388,13 +319,9 @@ sub groups_delete {
    my $obj = shift || confess "No Object!";
    my $name = shift || confess "No Name!";
    
-   if(my $groups =   $obj->groups($name)){
-      my ($todelete) = keys %{$groups}
-         or return $obj->error("Can't find group $name for delete!");
-   
-      $obj->{cache}->clear();
-      $obj->_getJSON("/group/delete/$name");
-   }
+   my $data = $obj->_getJSON("/group/delete/$name", undef, undef, 'noextract');
+
+   return 1;
 }
 
 #-------------------------------------------------------------------------------
