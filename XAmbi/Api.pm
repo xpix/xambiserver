@@ -393,7 +393,7 @@ sub groups_delete {
          or return $obj->error("Can't find group $name for delete!");
    
       $obj->{cache}->clear();
-      $obj->_getHTTP($todelete, undef, 'DELETE');
+      $obj->_getJSON("/group/delete/$name");
    }
 }
 

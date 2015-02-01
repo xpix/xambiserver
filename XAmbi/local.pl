@@ -38,9 +38,8 @@ dum( $xambi->series() );
 #dum( $xambi->groups_new('groupname_second', []) );
 dum( $xambi->groups() );
 dum( $xambi->groups('Garten') );
-#dum( $xambi->groups_delete('/group/5zn8tpvdw3/unknown') );
-#dum( $xambi->groups_delete('Garten') );
-#dum( $xambi->groups() );
+dum( $xambi->groups_delete('Wohnzimmer') );
+dum( $xambi->groups() );
 
 # Funtions
 #printf "Add series: 152 to groupname\n";
