@@ -27,7 +27,8 @@ my $cv = AnyEvent->condvar;
 # SerialPort read Event
 my $hdl = 
    AnyEvent::SerialPort->new(
-     serial_port => '/dev/ttyUSB0',
+     # serial_port => '/dev/ttyUSB0',
+     serial_port => '/dev/ttyAMA0',
    );
 
 # we assume a request starts with a single line
