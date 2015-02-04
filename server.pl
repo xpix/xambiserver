@@ -1,3 +1,5 @@
+#!/usr/bin/perl
+
 use warnings;
 use strict;
 
@@ -69,7 +71,7 @@ sub _timedata {
          $TYPES->{$item->{'n'}} = XHome::Sensor->new({topic => $item->{'n'}})
             unless(exists $TYPES->{$item->{'n'}});
          my $sensor = $TYPES->{$item->{'n'}};
-         $sdata->{$name} = sprintf("%.3f", $item->{'v'} / $sensor->display->{divider});
+         $sdata->{$name} = sprintf("%.3f", $item->{'v'} / ($sensor->display->{divider} || 1));
 
          if(my $range = $sensor->{alarmobj}->range()){
             $sdata->{'Alarm'} = $range->[0];
@@ -96,7 +98,7 @@ sub _sensorgrp {
       }) or die "Can't initialze Sensor with topic: $topic!";
       
       my $info = $sensor->info;
-      
+
       push(@{$sensorHash->{$sensor->id}->{value}}, $info);
 
       unless(exists $sensorHash->{$sensor->id}->{name}){

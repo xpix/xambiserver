@@ -1,0 +1,124 @@
+            $(function () {
+               $('.datetimepicker').datetimepicker({
+                  closeOnDateSelect: false,
+                  onChangeDateTime : function(dp,input){
+                     $('.selectBounds').trigger( 'change' );
+                  },
+               });
+
+                      var dsChart = {};
+
+               var startolddate  = new Date();
+               var endolddate    = new Date();
+
+
+               var rollup = 'avg';
+               var interval = '1h';
+
+               dsChart['${sensor}'] = new $.ig.DataSource({
+                  type: "json",
+                  dataSource: '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval,
+               });
+
+               $('.selectBounds').on({
+                  change: function (e) {
+                     var interval = $('#select-interval-${sensor}').val();
+                     var rollup   = $('#select-rollup-${sensor}').val();
+
+                     var startdate= new Date($('#starttime-${sensor}').val());
+                     var enddate  = new Date($('#endtime-${sensor}').val());
+
+                     var start = ( $('#starttime-${sensor}').val() ? startdate.getTime() : '');
+                     var end = ( $('#endtime-${sensor}').val() ? enddate.getTime() : '');
+
+                     if(startolddate.getTime() == startdate.getTime() && endolddate.getTime() == enddate.getTime()){
+                        return;
+                     }
+                     
+
+                     var dgurl = '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval;
+                     if(start)
+                           dgurl += ',' + (start/1000);
+                     if(end)
+                           dgurl += ( start=='' ? ',,' : ',') + (end/1000);
+                     dsChart['${sensor}'] = new $.ig.DataSource({type: 'json', dataSource: dgurl});
+                     $("#chart-${sensor}").igDataChart( "option", "dataSource", dsChart['${sensor}']);
+                     
+                     startolddate = startdate;
+                     endolddate  = enddate;
+                  }
+               });
+
+               var possibleValues = "${info.config.ValNames}".split(',');
+               var axes = [{
+                  type: "categoryX",
+                  name: "xAxis",
+                  label: "Stamp",
+                  stroke: "lightgray",
+                  strokeThickness: 3,
+                  title: "Time",
+                  formatLabel: function (item) {  
+                        var datum = new Date(parseInt(item.Stamp) * 1000);
+                        var ret = datum.toDateString().replace(/\S+\s+(\S+)\s+(\d+).+/, "$2$1");  
+                        ret += "\n";
+                        ret += datum.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
+  
+                        return ret;  
+                  },  
+               }];
+               var series = [{
+                     type: "line",
+                     name: "Alarm",
+                     title: "Alarm level",
+                     xAxis: "xAxis",
+                     yAxis: 'axis-' + possibleValues[1],
+                     valueMemberPath: 'Alarm',
+                     legend: { element: "legend-${sensor}" }
+                  }];
+               var axesPos = ['outsideRight', 'outsideLeft', 'outsideLeft', 'outsideLeft'];
+               for(var i=0;i<possibleValues.length;i++){
+                  axes.push({
+                     type: "numericY",
+                     name: 'axis-' + possibleValues[i],
+                     minimumValue: parseFloat(config.display[possibleValues[i]].minimumValue),
+                     maximumValue: parseFloat(config.display[possibleValues[i]].maximumValue),
+                     labelLocation: axesPos[i],
+                     strokeThickness: 1,
+                     stroke: "lightgray",
+                     title: config.display[possibleValues[i]].text
+                  });
+                  var pfad = 'Power';
+                  if(possibleValues[i] != 'Power'){
+                     pfad = 'Value' + (i - 1);
+                  }
+                  series.push({
+                     type: "line",
+                     name: possibleValues[i],
+                     title: possibleValues[i] + " in " + config.display[possibleValues[i]].suffix,
+                     xAxis: "xAxis",
+                     yAxis: 'axis-' + possibleValues[i],
+                     valueMemberPath: pfad,
+                     isHighlightingEnabled: true,
+                     isTransitionInEnabled: true,
+                     showTooltip: true,
+                     tooltipTemplate: 'tooltipTemplate' + pfad,
+                     legend: { element: "legend-${sensor}" }
+                  });
+               }
+
+               $("#chart-${sensor}").igDataChart({
+                  dataSource: dsChart['${sensor}'],
+                  brushes: [ "darkred", "gray", "green", "blue", "brown" ],
+                  width: "100%",
+                  height: "450px",
+                  title: "${name}",
+                  subtitle: "${text}",
+                  horizontalZoomable: true,
+                  verticalZoomable: true,
+                  axes: axes,
+                  displayType: "continuous",
+                  series: series,
+                  leftMargin: 5,
+                  topMargin: 15
+               });
+            });
