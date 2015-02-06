@@ -3,7 +3,8 @@
 use warnings;
 use strict;
 
-$ENV{CONFIGFILE} = 'cfg/sensors.cfg';
+$ENV{CONFIGFILE}        = 'cfg/sensors.cfg';
+$ENV{CONFIGFILE_USERS}  = 'cfg/users.cfg';
 
 # only for debug
 use Data::Dumper;
@@ -148,12 +149,12 @@ get '/demo' => sub {
 get '/' => sub {
    my $c = shift;
 
-   my $conf = Config::General->new($ENV{CONFIGFILE});
-   my %cfg = $conf->getall;
+   my %cfg  = Config::General->new($ENV{CONFIGFILE})->getall;
+   my %ucfg = Config::General->new($ENV{CONFIGFILE_USERS})->getall;
 
    if(my ($user, $password) = split(/\:/, $c->req->url->to_abs->userinfo)){
       my $login = 0;
-      map{ $login = 1 if($_ eq $user and $cfg{'user'}{$_}{'password'} eq $password); } keys %{$cfg{'user'}};
+      map{ $login = 1 if($_ eq $user and $ucfg{'user'}{$_}{'password'} eq $password); } keys %{$ucfg{'user'}};
 
       if($login){
          # Render Content
