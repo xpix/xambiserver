@@ -21,16 +21,15 @@ XHome::Sensor - Module to get an sensor as object oriented
 
 =head1 SYNOPSIS
 
-   my $geras = Geras::Api->new({
-      apikey => 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-      host   => 'geras.1248.io',
+   my $xambi = XAmbi::Api->new({
+      host   => 'localhost',
    });
 
    my $sensorobj = XHome::Sensor->new({
       topic => $event->{topic},
       when => $event->{when},
       value => $event->{value},
-      geras => $geras,
+      geras => $xambi,
    });
    print
       $sensorobj->type, # i.e. Temperature
@@ -70,6 +69,31 @@ sub new {
 
    return $self;
 }
+=pod
+
+=head2 C<read only named probertys>
+
+Lots of methods to return probertys.
+
+  $sensorobj->display(); # Confighash to display this topic
+  $sensorobj->divider(); # Divider for raw value
+  $sensorobj->name();    # Name for this value in sensor
+  $sensorobj->cfg();     # complete Confighashfor all Sensors
+  $sensorobj->config();  # Confighash for for this sensor type
+  $sensorobj->idx();     # gets Value index or power
+  $sensorobj->info();    # get a hash with complete info's about this sensor
+  $sensorobj->type();    # return the type of this sensor value
+  $sensorobj->topic($t); # set topic
+  $sensorobj->value($v); # set or get Value
+  $sensorobj->now();     # get now value
+  $sensorobj->last();    # get last Value
+  $sensorobj->when();    # last change of this sensor value in unixtime
+  $sensorobj->id();      # get or set id from topic
+  $sensorobj->valueid(); # get or set valueid
+  $sensorobj->geras();   # get or set xambi object
+  $sensorobj->group();   # get group from sensor object
+
+=cut
 
 sub display { my $obj = shift; $obj->cfg->{display}{$obj->name} };
 sub divider { my $obj = shift; $obj->display->{divider} };
