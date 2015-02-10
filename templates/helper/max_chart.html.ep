@@ -17,7 +17,7 @@
 
                dsChart['${sensor}'] = new $.ig.DataSource({
                   type: "json",
-                  dataSource: '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval,
+                  dataSource: '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor},' + rollup + ',' + interval,
                });
 
                $('.selectBounds').on({
@@ -36,7 +36,7 @@
                      }
                      
 
-                     var dgurl = '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor}/%2B,' + rollup + ',' + interval;
+                     var dgurl = '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor},' + rollup + ',' + interval;
                      if(start)
                            dgurl += ',' + (start/1000);
                      if(end)

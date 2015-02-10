@@ -8,7 +8,7 @@ my $geras = Geras::Api->new({
    host   => 'geras.1248.io',
 });
 
-$geras->clearCache();
+#$geras->clearCache();
 
 # Publish
 #dum( $geras->publish('/sensors/155/power', 4444) );
@@ -30,13 +30,13 @@ $geras->clearCache();
 #dum( $geras->series('155') );
 #dum( $geras->lastvalue('/sensors/155/power') );
 #dum( $geras->rollup('/sensors/155/power','min','1d') );
-#dum( $geras->rollup('/sensors/155/power','max','1d') );
+dum( $geras->rollup('/sensors/411/power','avg','1h', 1423044422, 1423049006) );
 
 # Groups
 #dum( $geras->groups_new('Arbeitszimmer', ['/sensors/155/power', '/sensors/155/0', '/sensors/155/1']) );
 #dum( $geras->groups_new('groupname_second', []) );
 #dum( $geras->groups('Arbeitszimmer') );
-dum( $geras->groups() );
+#dum( $geras->groups() );
 #dum( $geras->groups_delete('/group/5zn8tpvdw3/unknown') );
 #dum( $geras->groups_delete('Garten') );
 #dum( $geras->groups() );

@@ -2,6 +2,7 @@ use Mojolicious::Lite;
 use JSON::XS;
 use DBI;
 use Data::Dumper;
+sub dum { warn Dumper(@_) };
 
 
 $ENV{CONFIGFILE} = 'cfg/users.cfg';
@@ -171,22 +172,30 @@ get '/topic/rollup/:rollup/:interval' => sub {
     my $between = '';
     $between .= ($start ? "AND timestamp > $start " : "");
     $between .= ($end   ? "AND timestamp < $end " : "");
-    
 
-    my $sql = "
-      select 
-         datetime((strftime('%s', datetime(timestamp,'unixepoch')) / $seconds) * $seconds, 'unixepoch') interval, 
-         $rollup(value) val
-      from 
-         mqtt 
-      where 
-         topic = '$path' 
-         $between
-      group by interval 
-      order by interval;
-   ";
+    # get all series and mix data
+    my $series = $self->topics($path, 'distinct');
+    my $return = [[]];
+    foreach my $serie (@{$series->[0]}){
+       my $sql = "
+         select 
+            datetime((strftime('%s', datetime(timestamp,'unixepoch')) / $seconds) * $seconds, 'unixepoch') interval, 
+            timestamp,
+            topic,
+            $rollup(value) val
+         from 
+            mqtt 
+         where 
+            topic = '$serie->[0]' 
+            $between
+         group by interval 
+         order by interval;
+      ";
+      my $erg = $self->sql($sql);
+      push(@{$return->[0]}, @{$erg->[0]});
+    }
 
-    return $self->render(json => {result => $self->sql($sql), message => "OK"});
+    return $self->render(json => {result => $return, message => "OK"});
 };
 
 # http://localhost:3080/411/addtogroup/Garten
