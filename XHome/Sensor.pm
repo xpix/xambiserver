@@ -71,8 +71,6 @@ sub new {
 }
 =pod
 
-=head2 C<read only named probertys>
-
 Lots of methods to return probertys.
 
   $sensorobj->display(); # Confighash to display this topic
