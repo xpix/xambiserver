@@ -29,19 +29,23 @@ my $ERRORS;
 
 =head1 NAME
 
-XAmbi::Api - Module to get a all data from geras.1248.io.
+XAmbi::Api - Module to get a all data from supported JSON-API found at https://github.com/xpix/xambiserver/blob/master/bin/api.pl
 
 =head1 SYNOPSIS
 
-  my $geras = XAmbi::Api->new({
-   apikey  => 'kjdahdkjhasdlkj...'}
-  );
-  my $list = $geras->series();
-  confess $list->error() if($list->error());
+   use XAmbi::Api;
+   my $xambi = XAmbi::Api->new({
+      host   => '127.0.0.1',
+      port   => '3080',
+      noproxy=> 1,
+   });
+   
+   $xambi->clearCache();
+   $xambi->series();
 
 =head1 DESCRIPTION
 
-Package to manage API Calls via http json to geras api.
+Package to manage API Calls via http json to xambi api.
 
 =cut
 
@@ -74,6 +78,15 @@ sub new {
    return $self;
 }
 
+=pod
+
+=head1 Methods
+
+=head2 C<error( $msg )>
+
+Returns or registered an Error if $msg defined.
+
+=cut
 #-------------------------------------------------------------------------------
 sub error {
 #-------------------------------------------------------------------------------
@@ -89,6 +102,13 @@ sub error {
    return undef;
 }
 
+=pod
+
+=head2 C<publish( $serie, $value )>
+
+Send data to mqtt broker via publish and save to a shared memory for access for other processes.
+
+=cut
 #-------------------------------------------------------------------------------
 sub publish {
 #-------------------------------------------------------------------------------
@@ -130,6 +150,13 @@ sub publish {
    return 1;
 }
 
+=pod
+
+=head2 C<fetchdata()>
+
+Get Data from shared memory for other processes.
+
+=cut
 #-------------------------------------------------------------------------------
 sub fetchdata {
 #-------------------------------------------------------------------------------
@@ -150,6 +177,13 @@ sub fetchdata {
 }
 
 
+=pod
+
+=head2 C<series( $only )>
+
+Get all Series as list or only series for one id.
+
+=cut
 #-------------------------------------------------------------------------------
 sub series {
 #-------------------------------------------------------------------------------
@@ -175,6 +209,13 @@ sub series {
    }
 }
 
+=pod
+
+=head2 C<series_id( '/foo/200/value' )>
+
+Return the id (200) from a topic.
+
+=cut
 #-------------------------------------------------------------------------------
 sub series_id {
 #-------------------------------------------------------------------------------
@@ -185,6 +226,13 @@ sub series_id {
    return $tokens[1];
 }
 
+=pod
+
+=head2 C<series_group( $id )>
+
+Get Group entry for serie with $id (i.e.: 200).
+
+=cut
 #-------------------------------------------------------------------------------
 sub series_group {
 #-------------------------------------------------------------------------------
@@ -204,6 +252,13 @@ sub series_group {
    return $GroupName;
 }
 
+=pod
+
+=head2 C<series_unique( $topic, $full )>
+
+Get a list with Series but in unique form. The entrys can be full qualified (/foo/200/power)
+
+=cut
 #-------------------------------------------------------------------------------
 sub series_unique {
 #-------------------------------------------------------------------------------
@@ -228,6 +283,13 @@ sub series_unique {
    return [sort keys %$entrys];
 }
 
+=pod
+
+=head2 C<series_delete( $topic)>
+
+Delete Serie with all Data.
+
+=cut
 #-------------------------------------------------------------------------------
 sub series_delete {
 #-------------------------------------------------------------------------------
@@ -238,6 +300,15 @@ sub series_delete {
    $obj->_getHTTP('/series'.$serie, undef, 'DELETE');
 }
 
+=pod
+
+=head2 C<series_add_to_group( $serie, $group )>
+
+Add Serie of topics to a named group.
+
+  $xambi->series_add_to_group(200, 'Garden')
+
+=cut
 #-------------------------------------------------------------------------------
 sub series_add_to_group {
 #-------------------------------------------------------------------------------
@@ -251,6 +322,15 @@ sub series_add_to_group {
    $obj->_getJSON("/$serie/addtogroup/$group", undef, undef, 'noextract');
 }
 
+=pod
+
+=head2 C<series_remove_from_group( $serie )>
+
+Remove Serie of topics from groups.
+
+  $xambi->series_remove_from_group(200)
+
+=cut
 #-------------------------------------------------------------------------------
 sub series_remove_from_group {
 #-------------------------------------------------------------------------------
@@ -260,6 +340,15 @@ sub series_remove_from_group {
    $obj->_getJSON("/$serie/addtogroup/Unknown", undef, undef, 'noextract');
 }
 
+=pod
+
+=head2 C<series_move_to_group( $serie, $group )>
+
+Move Serie of topics to named group.
+
+  $xambi->series_remove_from_group(200, 'Garden')
+
+=cut
 #-------------------------------------------------------------------------------
 sub series_move_to_group {
 #-------------------------------------------------------------------------------
@@ -271,6 +360,15 @@ sub series_move_to_group {
    $obj->series_add_to_group($seriestag, $group);
 }
 
+=pod
+
+=head2 C<groups( $group )>
+
+List groups or only entrys they are match to $group.
+
+  $xambi->groups('Garden')
+
+=cut
 #-------------------------------------------------------------------------------
 sub groups {
 #-------------------------------------------------------------------------------
@@ -303,6 +401,15 @@ sub groups {
    }
 }
 
+=pod
+
+=head2 C<groups_new( $group )>
+
+Add new named group to groups.
+
+  $xambi->groups_new('Garden')
+
+=cut
 #-------------------------------------------------------------------------------
 sub groups_new {
 #-------------------------------------------------------------------------------
@@ -313,6 +420,15 @@ sub groups_new {
 }
 
 
+=pod
+
+=head2 C<groups_delete( $group )>
+
+Remove named group from groups and put series to "Unknown" group.
+
+  $xambi->groups_delete('Garden')
+
+=cut
 #-------------------------------------------------------------------------------
 sub groups_delete {
 #-------------------------------------------------------------------------------
@@ -324,6 +440,19 @@ sub groups_delete {
    return 1;
 }
 
+=pod
+
+=head2 C<rollup( $serie, $rollup, $interval, $start, $end )>
+
+Return listed data from serie in a specific timeinterval in average, min, max value.
+$average can be 'avg', 'min', 'max', 'sum'
+$interval can be 'Xm' for minute, 'Xh' for hour, 'Xd' for day, 'Xw' for week.
+$start in seconds since epoch
+$end in seconds since epoch
+
+  my $list = $xambi->rollup('/sensors/200', 'avg', '1h')
+
+=cut
 #-------------------------------------------------------------------------------
 sub rollup {
 #-------------------------------------------------------------------------------
@@ -350,6 +479,15 @@ sub rollup {
    return $obj->_getJSON($url,undef,undef,'noextract');
 }
 
+=pod
+
+=head2 C<lastvalue( $topic )>
+
+Remove named group from groups and put series to "Unknown" group.
+
+  $xambi->lastvalue('/foo/200/value')
+
+=cut
 #-------------------------------------------------------------------------------
 sub lastvalue {
 #-------------------------------------------------------------------------------
@@ -472,7 +610,15 @@ sub extract {
    return $return;   
 }
 
+=pod
 
+=head2 C<clearCache( $entry )>
+
+Clear cache complete or only for $entry.
+
+  $xambi->clearCache()
+
+=cut
 #-------------------------------------------------------------------------------
 sub clearCache {
 #-------------------------------------------------------------------------------
