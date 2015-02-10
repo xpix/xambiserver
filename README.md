@@ -12,12 +12,15 @@ The xambiserver project are a couple of tools to install a MQTT Network and Webi
 
 
 ##Install
-aptitude install libmojolicious-perl libjson-xs-perl
+`aptitude install libmojolicious-perl libjson-xs-perl`
 
 ##Start Webinterface server
-cd xambiserver
-morbo -l http://*:3080 server_local.pl
-firefox http://localhost:3080
+`cd xambiserver`
+
+`morbo -l http://*:3080 server_local.pl`
+
+`firefox http://localhost:3080`
+
 
 ##Configuration
 Please read the [Readme.md](https://github.com/xpix/xambiserver/tree/master/cfg) in cfg directory.
