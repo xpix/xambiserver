@@ -56,11 +56,11 @@ sub new {
    my $time = time;
 
    # API Data
+   $self->cfg(   delete $args->{'configfile'} || $ENV{CONFIGFILE} ) || die "Can't read config!";
    $self->topic( delete $args->{'topic'} )   || die "No Topic in new!";
    $self->when ( delete $args->{'when'} || $time );
    $self->value( delete $args->{'value'} )   || 0;
    $self->geras( delete $args->{'geras'} )   || 0;
-   $self->cfg(   delete $args->{'configfile'} || $ENV{CONFIGFILE} ) || die "Can't read config!";
 
    # Alarmobject init
    $self->{alarmobj} = XHome::Alarm->new({

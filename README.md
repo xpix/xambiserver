@@ -10,15 +10,25 @@ The xambiserver project are a couple of tools to install a MQTT Network and Webi
 - Raspberry: Webinterface and [Gateway](https://github.com/xpix/XAmbi) for [XAmbi Nodes](https://github.com/xpix/XAmbi/tree/master/Xambi_kids)
 - NAS for MQTT Broker and Subscribe tool to save all Data in sqlite-db file.
 
+##Start serial
+Start command to subscribe the serial channel from jeenode and send data to a mqtt broker.
 
-##Install
-`aptitude install libmojolicious-perl libjson-xs-perl`
+`screen -s serial ./serial.pl /dev/ttyUSB0`
+
+##Start MQTT Subscribe
+Start command to subscribe all topics at MQTT Server. All data will save to a sqlite Database. 
+
+`screen -s subscribe ./bin/mqtt_subscribe.pl localhost 1883`
+
+##Start API JSON Server
+The XAmbi-API will connect to a sqlite DB and return all Data as a JSON API Webserver on a specific port.
+
+`screen -S api morbo -l http://*:3080 bin/api.pl`
 
 ##Start Webinterface server
-`cd xambiserver`
-
 `morbo -l http://*:3080 server_local.pl`
 
+##Check Webinterface
 `firefox http://localhost:3080`
 
 

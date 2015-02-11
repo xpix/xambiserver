@@ -7,19 +7,21 @@ use warnings;
 
 use AnyEvent;
 use AnyEvent::SerialPort;
-use Geras::Api;
+use XAmbi::Api;
 use XHome::Sensor;
 
 use Data::Dumper;
 sub dum { warn sprintf("DEBUG: %s\n", Dumper(@_)); };
 
 print STDERR "Init ...\n";
+
+my $port = shift || '/dev/ttyAMA0';
+
 # Geras MQTT API
-my $geras = Geras::Api->new({
-   apikey => '9ca6362e6051ec2588074f23a7fb7afe',
-   host   => 'geras.1248.io',
+my $xambi = XAmbi::Api->new({
+   host   => 'localhost',
 });
-#$geras->clearCache;
+$xambi->clearCache;
    
 #--------------------------
 my $cv = AnyEvent->condvar;
@@ -27,8 +29,7 @@ my $cv = AnyEvent->condvar;
 # SerialPort read Event
 my $hdl = 
    AnyEvent::SerialPort->new(
-     # serial_port => '/dev/ttyUSB0',
-     serial_port => '/dev/ttyAMA0',
+     serial_port => $port,
    );
 
 # we assume a request starts with a single line
@@ -72,7 +73,7 @@ sub handle_message {
       });   
    }
 
-   $geras->publish($PAYLOAD);   
+   $xambi->publish($PAYLOAD);   
 }
 
 sub checkValues {
@@ -83,7 +84,7 @@ sub checkValues {
       my $topic = "/sensor/$node/$indexer";
 		my $sensor = XHome::Sensor->new({
 			topic => $topic,
-			geras => $geras,
+			geras => $xambi,
 		});
 		if(not defined $sensor->value($value)){
 			# return 0;

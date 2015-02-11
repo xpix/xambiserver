@@ -29,7 +29,9 @@ my $subclient = "/usr/bin/mosquitto_sub -h $host -p $port -v -t /#";
    $subclient = "/usr/bin/mosquitto_sub -u '' -P $apikey -h $host -p $port -v -t /#"
       if($apikey);
 
-printf "Start mqtt client: $subclient\n";
+my $display = $subclient;
+$display =~ s/$apikey/TOPSECRET/sig if($apikey);
+printf "Start mqtt client: $display\n";
 open(SUB, "$subclient|");
 SUB->autoflush(1);
 
