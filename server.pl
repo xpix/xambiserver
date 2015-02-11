@@ -12,7 +12,7 @@ sub dum { warn Dumper(@_)};
 
 use Mojolicious::Lite;
 use Mojo::IOLoop;
-use Geras::Api;
+use XAmbi::Api;
 use XHome::Sensor;
 use JSON::XS;
 
@@ -21,11 +21,12 @@ my $TYPES   = {};
 
 # Geras MQTT API
 dum( "Init Geras ... " );
-my $geras = Geras::Api->new({
-   apikey => '9ca6362e6051ec2588074f23a7fb7afe',
-   host   => 'geras.1248.io',
+my $xambi = XAmbi::Api->new({
+   host   => '127.0.0.1',
+   port   => 3080,
+   noproxy=> 1,
 });
-#$geras->clearCache;
+$xambi->clearCache;
 
 # -----------------------
 
@@ -37,7 +38,7 @@ sub _seriestypes {
    foreach my $topic (@$data){
       my $sensor = XHome::Sensor->new({
          topic => $topic.'/power',
-         geras => $geras,
+         geras => $xambi,
       }) or die "Can't initialze Sensor with topic: $topic!";
       $return->{$sensor->id} = $sensor->group(1);
    }
@@ -51,28 +52,29 @@ sub _timedata {
    my $timegrouped = {};
    map {
       # Group in 10 sec steps
-      my @trible = split(//, $_->{'t'});
+      my @trible = split(//, $_->[1]);
       pop @trible;
       my $mark = join('', @trible);
       push(@{$timegrouped->{$mark}}, $_);
-   } @{$data->{e}};
+   } @{$data};
 
    my $return = [];
    foreach my $timestamp (sort {$a <=> $b} keys %$timegrouped){
-      my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($timegrouped->{$timestamp}->[0]->{'t'});
+      my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($timegrouped->{$timestamp}->[0][1]);
       my $sdata = {
          "Date" => sprintf('%02d.%02d.%04d', $mday, $mon+1, $year + 1900),
          "Time" => sprintf('%02d:%02d:%02d', $hour, $min, $sec),
-         "Stamp" => $timegrouped->{$timestamp}->[0]->{'t'},
+         "Stamp" => $timegrouped->{$timestamp}->[0][1],
       };         
       foreach my $item (@{$timegrouped->{$timestamp}}){
-         my @elements = split(/\//, $item->{'n'});
+         my ($texttime, $timestamp, $topic, $value) = @$item;
+         my @elements = split(/\//, $topic);
          my $name = $elements[-1] eq 'power' ? 'Power' : 'Value'.$elements[-1];
 
-         $TYPES->{$item->{'n'}} = XHome::Sensor->new({topic => $item->{'n'}})
-            unless(exists $TYPES->{$item->{'n'}});
-         my $sensor = $TYPES->{$item->{'n'}};
-         $sdata->{$name} = sprintf("%.3f", $item->{'v'} / ($sensor->display->{divider} || 1));
+         $TYPES->{$topic} = XHome::Sensor->new({topic => $topic})
+            unless(exists $TYPES->{$topic});
+         my $sensor = $TYPES->{$topic};
+         $sdata->{$name} = sprintf("%.3f", $value / ($sensor->display->{divider} || 1));
 
          if(my $range = $sensor->{alarmobj}->range()){
             $sdata->{'Alarm'} = $range->[0];
@@ -93,9 +95,11 @@ sub _sensorgrp {
    my $sensorHash = {};
 
    foreach my $topic (@{$data->{$group}}){
+      next unless($topic);
+
       my $sensor = XHome::Sensor->new({
          topic => $topic,
-         geras => $geras,
+         geras => $xambi,
       }) or die "Can't initialze Sensor with topic: $topic!";
       
       my $info = $sensor->info;
@@ -122,9 +126,9 @@ dum( "Init Loop ... " );
 
 Mojo::IOLoop->recurring(1 => sub {
    my $loop = shift;
-   my $events = $geras->fetchdata || [];
+   my $events = $xambi->fetchdata || [];
    foreach my $event (@$events){
-      $event->{geras} = $geras;
+      $event->{geras} = $xambi;
       my $sensor = XHome::Sensor->new(
          $event
       );
@@ -140,7 +144,7 @@ get '/demo' => sub {
    my $c = shift;
    
    # Fill Stash ...
-   $c->stash( rooms => $geras->groups );
+   $c->stash( rooms => $xambi->groups );
    
    # Render Content
    $c->render(template => 'index');
@@ -176,26 +180,27 @@ get '/geras' => sub {
    my $c   = shift;
    my $sub = $c->param('sub') || die "No 'sub' parameter!";
    my @params = split(/,/, $c->param('subparams') || '');
+   my $data = $xambi->$sub(@params);
 
    if(defined $c->param('type') and $c->param('type') eq 'sensorgrp'){
       $c->render(
-         json => _sensorgrp( $geras->$sub(@params), $params[0] )
+         json => _sensorgrp( $data, $params[0] )
       );
    }
    elsif(defined $c->param('type') and $c->param('type') eq 'timedata'){
       $c->render(
-         json => _timedata( $geras->$sub(@params) )
+         json => _timedata( $data )
       );
    }
    elsif(defined $c->param('type') and $c->param('type') eq 'seriestypes'){
       $c->render(
-         json => _seriestypes( $geras->$sub(@params) )
+         json => _seriestypes( $data )
       );
    }
 
    else {
       $c->render(json => {
-         $sub => $geras->$sub(@params),
+         $sub => $xambi->$sub(@params),
       });
    }
    
@@ -210,7 +215,7 @@ get '/sensor' => sub {
 
    my $sensor = XHome::Sensor->new({
       topic => $topic,
-      geras => $geras,
+      geras => $xambi,
    }) or die "Can't initialze Sensor with topic: $topic!";
 
    $c->render(json => {
