@@ -575,7 +575,8 @@ sub _getJSON {
       }
    }
    else {
-      confess $res->status_line;
+      warn $res->status_line;
+      return [];
    }
 
    if(ref $json eq 'ARRAY'){

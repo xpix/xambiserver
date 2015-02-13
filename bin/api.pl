@@ -155,6 +155,7 @@ get '/topic/now' => sub {
 
 # http://localhost:3080/topic/rollup/avg/1d?path=/sensors/112/power&start=1423048000&end=1423049000
 # http://localhost:3080/topic/rollup/min/1d?path=/sensors/112/power&start=1423048000
+# http://localhost:3080/topic/rollup/min/1d?path=/sensors/112/power&start=-300 # (last 5 min)
 # http://localhost:3080/topic/rollup/max/1d?path=/sensors/112/power
 get '/topic/rollup/:rollup/:interval' => sub {
     my $self  = shift;
@@ -166,6 +167,9 @@ get '/topic/rollup/:rollup/:interval' => sub {
     my $path  = $self->param('path');
     my $start = $self->param('start');
     my $end   = $self->param('end');
+
+    # Support negative values for last x seconds
+    $start = time + $start if($start < 0);
 
     my $between = '';
     $between .= ($start ? "AND timestamp > $start " : "");

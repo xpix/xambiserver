@@ -1,0 +1,22 @@
+# This is a screen session file to start all possible Services with one command
+# go to xambiserver and start:
+#
+# cd xambiserver; 
+# screen -S "XAmbiSession" -c ScreensXambi
+
+screen -t "TTY"
+stuff "./serial.pl"
+
+screen -t "API"
+stuff "morbo -l http://*:3080 ./bin/api.pl"
+
+screen -t "WWW"
+stuff "morbo -l http://*:9080 ./server.pl"
+
+screen -t "MQTT"
+stuff " ./bin/mqtt_subscribe.pl localhost 1883"
+
+defscrollback 1024
+startup_message off
+autodetach on
+defutf8 on
