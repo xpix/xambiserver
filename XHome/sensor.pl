@@ -16,7 +16,6 @@ my $geras = Geras::Api->new({
 
 my $sensor = XHome::Sensor->new({
    topic => '/sensors/400/0',
-   geras => $geras,
 });
 
 $geras->clearCache();

@@ -81,6 +81,7 @@ Lots of methods to return probertys.
   $sensorobj->idx();     # gets Value index or power
   $sensorobj->info();    # get a hash with complete info's about this sensor
   $sensorobj->type();    # return the type of this sensor value
+  $sensorobj->suffix();  # return the suffix of this sensor value
   $sensorobj->topic($t); # set topic
   $sensorobj->value($v); # set or get Value
   $sensorobj->now();     # get now value
@@ -96,6 +97,7 @@ Lots of methods to return probertys.
 sub display { my $obj = shift; $obj->cfg->{display}{$obj->name} };
 sub divider { my $obj = shift; $obj->display->{divider} };
 sub name    { my $obj = shift; $obj->config->{ValNames}->[$obj->idx] };
+sub suffix  { my $obj = shift; $obj->display->{suffix} };
 
 #-------------------------------------------------------------------------------
 sub cfg {
@@ -155,7 +157,6 @@ sub type {
    my $id    = shift || $obj->{id} || die "No Id found!";
 
    my $sensortypes = $obj->cfg->{sensor};
-
    foreach my $typename (keys %$sensortypes){
       my $sector = $sensortypes->{$typename};
       if($id >= $sector->{startNodeId} and $id <= $sector->{endNodeId}){
@@ -189,7 +190,7 @@ sub value {
 
    if(defined $val and ref $obj->display eq 'HASH'){
 		# Check Value
-		my ($div, $min, $max) = ($obj->display->{divider}, $obj->display->{minimumValue}, $obj->display->{maximumValue});
+		my ($div, $min, $max) = ($obj->divider, $obj->display->{minimumValue}, $obj->display->{maximumValue});
 		my $value = $val / $div;
 
       # Check alarm status

@@ -42,6 +42,14 @@ alarms and types are defined in config file:
 
 Package to manage Senors.
 
+=head1 METHODS
+
+  $sensorobj->lastalarm;   # get time of last alarm
+  $sensorobj->MAIL($msg);  # send alarm mail 
+  $sensorobj->SMS($msg);   # send alarm sms
+  $sensorobj->range;       # get alarm range
+  $sensorobj->sensor;      # get sensor object
+
 =cut
 
 #-------------------------------------------------------------------------------

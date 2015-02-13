@@ -1,14 +1,12 @@
 use Mojolicious::Lite;
 use JSON::XS;
 use DBI;
+use XHome::Sensor;
 use Data::Dumper;
 sub dum { warn Dumper(@_) };
 
 
-$ENV{CONFIGFILE} = 'cfg/users.cfg';
-use Config::General;
-my $conf = Config::General->new($ENV{CONFIGFILE});
-my %cfg = $conf->getall;
+$ENV{CONFIGFILE} = 'cfg/sensors.cfg';
 
 # Global handle for db connections
 my $created = "";
