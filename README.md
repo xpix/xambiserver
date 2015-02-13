@@ -31,6 +31,13 @@ The XAmbi-API will connect to a sqlite DB and return all Data as a JSON API Webs
 ##Check Webinterface
 `firefox http://localhost:3080`
 
+##Screens
+To start all processes in one Screen session, please call:
+
+`screen -S XAMBI -c ScreensXambi`
+
+here the config file: 
+https://github.com/xpix/xambiserver/blob/master/ScreensXambi
 
 ##Configuration
 Please read the [Readme.md](https://github.com/xpix/xambiserver/tree/master/cfg) in cfg directory.
