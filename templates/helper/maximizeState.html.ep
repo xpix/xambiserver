@@ -10,7 +10,7 @@
          <div class="optionContainer">
             Interval
             <br />
-            <select id="select-interval-${sensor}" class="selectBounds">
+            <select id="select-interval-${sensor}" class="selectBounds-${sensor}">
                <option value="1m">Minute</option>
                <option value="1h" selected="selected">Houre</option>
                <option value="1d">Day</option>
@@ -21,7 +21,7 @@
          <div class="optionContainer">
             Rollup
             <br />
-            <select id="select-rollup-${sensor}" class="selectBounds">
+            <select id="select-rollup-${sensor}" class="selectBounds-${sensor}">
                <option value="avg" selected="selected">Average</option>
                <option value="sum">Sum</option>
                <option value="max">Max</option>

@@ -9,6 +9,7 @@ use AnyEvent;
 use AnyEvent::SerialPort;
 use XAmbi::Api;
 use XHome::Sensor;
+use Sys::Statistics::Linux; # debian libsys-statistics-linux-perl
 
 use Data::Dumper;
 sub dum { warn sprintf("DEBUG: %s\n", Dumper(@_)); };
@@ -28,6 +29,33 @@ $xambi->clearCache;
    
 #--------------------------
 my $cv = AnyEvent->condvar;
+
+# Timer
+my $w = AnyEvent->timer (after => 5, interval => 60, cb => sub {
+   my $node = 901;
+
+   # Load
+   my $stats   = `cat /proc/loadavg`; chomp $stats;
+   my($avg_1, $avg_5, $avg_15) = split(/\s+/, $stats);
+
+   # memory
+   $stats   = `cat /proc/meminfo`; chomp $stats;
+   my($memfree) = $stats =~ /MemFree\:\s+(\d+)\s+/;
+   my($swpfree) = $stats =~ /SwapFree\:\s+(\d+)\s+/;
+
+   # cpu temperature
+   my $temp   = int(`cat /sys/class/thermal/thermal_zone0/temp` / 10);
+
+   my $PAYLOAD = [];
+   push($PAYLOAD, 
+      { sprintf( '/sensors/%d/power',  $node) => $temp },
+      { sprintf( '/sensors/%d/0',      $node) => $avg_1 },
+      { sprintf( '/sensors/%d/1',      $node) => $memfree },
+      { sprintf( '/sensors/%d/2',      $node) => $swpfree },
+   );   
+
+   $xambi->publish($PAYLOAD);
+});
 
 # SerialPort read Event
 my $hdl = 

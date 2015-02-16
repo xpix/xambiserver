@@ -2,11 +2,11 @@
                $('.datetimepicker').datetimepicker({
                   closeOnDateSelect: false,
                   onChangeDateTime : function(dp,input){
-                     $('.selectBounds').trigger( 'change' );
+                     $('.selectBounds-${sensor}').trigger( 'change' );
                   },
                });
 
-                      var dsChart = {};
+               var dsChart = {};
 
                var startolddate  = new Date();
                var endolddate    = new Date();
@@ -20,7 +20,7 @@
                   dataSource: '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor},' + rollup + ',' + interval,
                });
 
-               $('.selectBounds').on({
+               $('.selectBounds-${sensor}').on({
                   change: function (e) {
                      var interval = $('#select-interval-${sensor}').val();
                      var rollup   = $('#select-rollup-${sensor}').val();
@@ -30,11 +30,6 @@
 
                      var start = ( $('#starttime-${sensor}').val() ? startdate.getTime() : '');
                      var end = ( $('#endtime-${sensor}').val() ? enddate.getTime() : '');
-
-                     if(startolddate.getTime() == startdate.getTime() && endolddate.getTime() == enddate.getTime()){
-                        return;
-                     }
-                     
 
                      var dgurl = '/geras?sub=rollup&type=timedata&subparams=/sensors/${sensor},' + rollup + ',' + interval;
                      if(start)

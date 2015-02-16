@@ -12,6 +12,9 @@ my ($host, $port, $apikey) = @ARGV;
 $host //= 'localhost';
 $port //= 1883;
 
+# messages for: $SYS/broker/messages/*
+my $inice = {'received' => 'power', 'sent' => 0, 'stored' => 1};
+
 
 local $| = 1;
 printf "Start MQTT Logging\n";
@@ -25,8 +28,8 @@ my $dbh = DBI->connect("DBI:SQLite:dbname=$database", "", "", {'RaiseError' => 1
 
 create_table() if(not -s $database);
 
-my $subclient = "/usr/bin/mosquitto_sub -h $host -p $port -v -t /#";
-   $subclient = "/usr/bin/mosquitto_sub -u '' -P $apikey -h $host -p $port -v -t /#"
+my $subclient = "/usr/bin/mosquitto_sub -h $host -p $port -v -t \\\$SYS/broker/messages/# -t /#";
+   $subclient = "/usr/bin/mosquitto_sub -u '' -P $apikey -h $host -p $port -v -t \\\$SYS/broker/messages/# -t /#"
       if($apikey);
 
 my $display = $subclient;
@@ -41,10 +44,16 @@ while(1){
    while (my $line = <SUB>) {
       chomp $line;
    	my ($topic, $value) = split(/\s+/, $line);
+      next if($value =~ /[a-z]+/i); # get only topics in format "path value"
       if($value =~ /\[/){
          my $data = $json->decode($value);
          $value = $data->{'e'}[0]{'v'};
       }
+      if($topic =~ /\$SYS/){
+         my @tuples = split('/', $topic);
+         $topic = '/sensors/900/' . $inice->{$tuples[-1]};
+      }
+
       printf "%s: %s => %s\n", scalar localtime, $topic, $value;
    	$dbh->do("INSERT INTO $dbtable (TOPIC, TIMESTAMP, VALUE) VALUES (?,?,?)", 
    	            undef, $topic, time, $value);
