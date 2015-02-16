@@ -13,6 +13,9 @@ use XHome::Sensor;
 use Data::Dumper;
 sub dum { warn sprintf("DEBUG: %s\n", Dumper(@_)); };
 
+# Autoflush on
+$| = 1;
+
 print STDERR "Init ...\n";
 
 my $port = shift || '/dev/ttyAMA0';

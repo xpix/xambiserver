@@ -31,21 +31,26 @@ my $subclient = "/usr/bin/mosquitto_sub -h $host -p $port -v -t /#";
 
 my $display = $subclient;
 $display =~ s/$apikey/TOPSECRET/sig if($apikey);
-printf "Start mqtt client: $display\n";
-open(SUB, "$subclient|");
-SUB->autoflush(1);
 
-printf "Start logging ...\n";
-while (my $line = <SUB>) {
-   chomp $line;
-	my ($topic, $value) = split(/\s+/, $line);
-   if($value =~ /\[/){
-      my $data = $json->decode($value);
-      $value = $data->{'e'}[0]{'v'};
+while(1){
+   printf "Start mqtt client: $display\n";
+   open(SUB, "$subclient|");
+   SUB->autoflush(1);
+   
+   printf "Start logging ...\n";
+   while (my $line = <SUB>) {
+      chomp $line;
+   	my ($topic, $value) = split(/\s+/, $line);
+      if($value =~ /\[/){
+         my $data = $json->decode($value);
+         $value = $data->{'e'}[0]{'v'};
+      }
+      printf "%s: %s => %s\n", scalar localtime, $topic, $value;
+   	$dbh->do("INSERT INTO $dbtable (TOPIC, TIMESTAMP, VALUE) VALUES (?,?,?)", 
+   	            undef, $topic, time, $value);
    }
-   printf "%s: %s => %s\n", scalar localtime, $topic, $value;
-	$dbh->do("INSERT INTO $dbtable (TOPIC, TIMESTAMP, VALUE) VALUES (?,?,?)", 
-	            undef, $topic, time, $value);
+
+   sleep 5;
 }
 
 $dbh->disconnect();
