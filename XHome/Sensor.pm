@@ -197,7 +197,7 @@ sub value {
       $obj->{alarmobj}->check($value)
          if(ref $obj->{alarmobj});
 
-		if($value < $min or $value > $max){
+		if(defined $min and defined $max and ($value < $min or $value > $max)){
 			return $obj->error(sprintf("Value %s for Node %s are not correct! Value not between %s to %s!",
 										$value, $obj->topic, $min, $max));
 		}

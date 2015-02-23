@@ -9,7 +9,6 @@ use AnyEvent;
 use AnyEvent::SerialPort;
 use XAmbi::Api;
 use XHome::Sensor;
-use Sys::Statistics::Linux; # debian libsys-statistics-linux-perl
 
 use Data::Dumper;
 sub dum { warn sprintf("DEBUG: %s\n", Dumper(@_)); };
@@ -25,7 +24,6 @@ my $port = shift || '/dev/ttyAMA0';
 my $xambi = XAmbi::Api->new({
    host   => 'localhost',
 });
-$xambi->clearCache;
    
 #--------------------------
 my $cv = AnyEvent->condvar;
@@ -70,6 +68,7 @@ my @start_request;
    printf STDERR "%s %s\n", scalar localtime(), $line 
       if($line);
    handle_message($line);
+
    # push next request read, possibly from a nested callback
    $hdl->push_read (@start_request);
 });

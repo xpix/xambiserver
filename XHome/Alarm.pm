@@ -126,7 +126,6 @@ sub check {
    if(exists $cfg_alarm->{name} and $cfg_alarm->{name} ne $sensor->name){
       return 1;
    }
-
    # Test only on value in array if valueidx set
    if($cfg_alarm->{idx} and $sensor->valueid != $cfg_alarm->{idx}){
       return 0;
@@ -142,7 +141,7 @@ sub check {
    my $msg = $cfg_alarm->{message};
    $msg =~ s/(\$\w+)/$1/eeg;
 
-   if(defined $value and $value < $cfg_alarm->{value}->[0] and $value > $cfg_alarm->{value}->[1]){
+   if(defined $value and $value <= $cfg_alarm->{value}->[0] and $value >= $cfg_alarm->{value}->[1]){
       # Alarm if lastalarm - timetolive greather than actual time
       if($obj->lastalarm < (time - $cfg_alarm->{ttl})){
          # Send via types
@@ -162,7 +161,7 @@ sub SMS {
 #-------------------------------------------------------------------------------
    my $obj   = shift || die "No Object!";
    my $msg   = shift || die "No Message!";
-
+dum($msg);
    my $cfg   = $obj->cfg->{alarmtype}->{SMS}
       or die "Can't find alarm configuration for type: SMS!";
   

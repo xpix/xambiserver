@@ -26,7 +26,6 @@ my $xambi = XAmbi::Api->new({
    port   => 3080,
    noproxy=> 1,
 });
-$xambi->clearCache;
 
 # -----------------------
 
@@ -123,22 +122,6 @@ sub _sensorgrp {
 
 # Check payload every x seconds and publish mqtt packets
 dum( "Init Loop ... " );
-
-Mojo::IOLoop->recurring(1 => sub {
-   my $loop = shift;
-   my $events = $xambi->fetchdata || [];
-   foreach my $event (@$events){
-      $event->{geras} = $xambi;
-      my $sensor = XHome::Sensor->new(
-         $event
-      );
-      push(@$EVENTS, $sensor);
-      # Trigger via websocket or other 
-      # to inform webpage for new Events
-      
-   }
-   $EVENTS = [];
-});
 
 get '/demo' => sub {
    my $c = shift;
