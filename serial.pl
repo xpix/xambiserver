@@ -9,7 +9,6 @@ use AnyEvent;
 use AnyEvent::SerialPort;
 use XAmbi::Api;
 use XHome::Sensor;
-use Sys::Statistics::Linux; # debian libsys-statistics-linux-perl
 
 use Data::Dumper;
 sub dum { warn sprintf("DEBUG: %s\n", Dumper(@_)); };
@@ -117,9 +116,6 @@ sub checkValues {
 			topic => $topic,
 			geras => $xambi,
 		});
-		if(not defined $sensor->value($value)){
-			# return 0;
-		}
       $i++;
 	}
 	return 1;
