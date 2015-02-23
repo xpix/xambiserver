@@ -24,7 +24,6 @@ my $port = shift || '/dev/ttyAMA0';
 my $xambi = XAmbi::Api->new({
    host   => 'localhost',
 });
-$xambi->clearCache;
    
 #--------------------------
 my $cv = AnyEvent->condvar;
@@ -69,6 +68,7 @@ my @start_request;
    printf STDERR "%s %s\n", scalar localtime(), $line 
       if($line);
    handle_message($line);
+
    # push next request read, possibly from a nested callback
    $hdl->push_read (@start_request);
 });

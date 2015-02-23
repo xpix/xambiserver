@@ -7,7 +7,6 @@ use Carp;
 use LWP::UserAgent;
 use JSON::XS;
 use URI::Escape;
-use IPC::ShareLite qw( :lock );
 #use Cache::Memory;
 #use Cache::File;
 use CHI;
@@ -62,18 +61,6 @@ sub new {
    $self->{'host'}    = delete $args->{'host'}   || '127.0.0.1';
    $self->{'port'}    = delete $args->{'host'}   || 3080;
    $self->{'noproxy'} = delete $args->{'noproxy'}|| 0;
-
-   $self->{'cache'} = CHI->new( 
-      driver => 'Memory', 
-      global => 1,
-      expires_in => 600,
-      );
-
-   $self->{'share'} = IPC::ShareLite->new(
-        -key     => 'mqtt',
-        -create  => 'yes',
-        -destroy => 'no'
-    ) or confess $!;
 
    return $self;
 }
@@ -142,39 +129,8 @@ sub publish {
          if($erg != 0);
    }
 
-   $obj->{share}->lock( LOCK_EX|LOCK_NB );
-   $obj->{share}->store(encode_json($share));
-   $obj->{share}->unlock();
-
    return 1;
 }
-
-=pod
-
-=head2 C<fetchdata()>
-
-Get Data from shared memory for other processes.
-
-=cut
-#-------------------------------------------------------------------------------
-sub fetchdata {
-#-------------------------------------------------------------------------------
-   my $obj   = shift || confess "No Object!";
-
-   # get shared Memory for web process
-   my $string = $obj->{share}->fetch;
-
-   # remove old data cuz one read are atomar
-   # to prevent fetch same data twice time
-   if($string){
-      $obj->{share}->lock( LOCK_EX|LOCK_NB );
-      $obj->{share}->store('');
-      $obj->{share}->unlock();
-      return decode_json( $string );
-   }
-   return 0;
-}
-
 
 =pod
 
@@ -295,7 +251,6 @@ sub series_delete {
    my $obj = shift || confess "No Object!";
    my $serie   =shift || confess "No Serie to delete!";
    
-   $obj->{cache}->clear();
    $obj->_getHTTP('/series'.$serie, undef, 'DELETE');
 }
 
@@ -608,24 +563,6 @@ sub extract {
       }
    }
    return $return;   
-}
-
-=pod
-
-=head2 C<clearCache( $entry )>
-
-Clear cache complete or only for $entry.
-
-  $xambi->clearCache()
-
-=cut
-#-------------------------------------------------------------------------------
-sub clearCache {
-#-------------------------------------------------------------------------------
-   my $obj = shift || confess "No Object!";
-   my $entry = shift || '';
-   
-   $obj->{cache}->clear();
 }
 
 
