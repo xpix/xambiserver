@@ -93,6 +93,9 @@ sub _sensorgrp {
    my $sensorvalues = {};
    my $sensorHash = {};
 
+   return [ sort keys %$data ]
+      unless($group);
+
    foreach my $topic (@{$data->{$group}}){
       next unless($topic);
 
@@ -118,6 +121,23 @@ sub _sensorgrp {
    }
 
    return [ values %{$sensorHash} ];
+}
+
+sub render_jsonp {
+   my $c = shift;
+   my %render = @_;
+
+   if(my $cb = $c->param('callback')){
+      $c->render(text => "$cb (".
+         encode_json($render{'json'})
+         . " )"
+      );
+   }
+   else {
+      $c->render(%render);
+   }
+
+   
 }
 
 # Check payload every x seconds and publish mqtt packets
@@ -166,25 +186,27 @@ get '/geras' => sub {
    my $data = $xambi->$sub(@params);
 
    if(defined $c->param('type') and $c->param('type') eq 'sensorgrp'){
-      $c->render(
+      render_jsonp($c,
          json => _sensorgrp( $data, $params[0] )
       );
    }
    elsif(defined $c->param('type') and $c->param('type') eq 'timedata'){
-      $c->render(
+      render_jsonp($c,
          json => _timedata( $data )
       );
    }
    elsif(defined $c->param('type') and $c->param('type') eq 'seriestypes'){
-      $c->render(
+      render_jsonp($c,
          json => _seriestypes( $data )
       );
    }
 
    else {
-      $c->render(json => {
-         $sub => $xambi->$sub(@params),
-      });
+      render_jsonp($c,
+         json => {
+            $sub => $data,
+         }
+      );
    }
    
 };

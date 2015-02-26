@@ -58,6 +58,7 @@ while(1){
    	$dbh->do("INSERT INTO $dbtable (TOPIC, TIMESTAMP, VALUE) VALUES (?,?,?)", 
    	            undef, $topic, time, $value);
    }
+   SUB->close();
 
    sleep 5;
 }

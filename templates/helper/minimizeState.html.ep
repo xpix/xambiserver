@@ -4,8 +4,9 @@
             <script type="text/javascript">
                $(function () {
                   var display = config.display['${type}'];
+                  var sensorcfg = config.sensor['${type}'];
                   var vals = [${value.0.last}, ${value.1.last}, ${value.2.last}, ${value.3.last}, ${value.4.last}, ${value.5.last}, ${value.6.last}, ${value.7.last}, ${value.8.last}, ${value.9.last}];
-                  var vidx = (typeof display.valueidx == 'undefined' ? 0 : parseInt(display.valueidx) );
+                  var vidx = (typeof sensorcfg.valueidx == 'undefined' ? 0 : parseInt(sensorcfg.valueidx) );
 
                   if(display.minType == 'gauge'){
                      %= include 'helper/min_gauge'

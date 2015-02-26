@@ -7,9 +7,6 @@ use Carp;
 use LWP::UserAgent;
 use JSON::XS;
 use URI::Escape;
-#use Cache::Memory;
-#use Cache::File;
-use CHI;
 
 use Data::Dumper;
 sub dum { warn Dumper(@_) };
