@@ -116,9 +116,6 @@ sub checkValues {
 			topic => $topic,
 			geras => $xambi,
 		});
-		if(not defined $sensor->value($value)){
-			# return 0;
-		}
       $i++;
 	}
 	return 1;
