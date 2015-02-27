@@ -98,6 +98,63 @@ helper topics => sub {
     return $data;
 };
 
+helper preparedata => sub{
+    my $self = shift;
+    my $data = shift || [];
+
+   my $timegrouped = {};
+   map {
+      # Group in 10 sec steps
+      my @trible = split(//, $_->[1]);
+      pop @trible;
+      my $mark = join('', @trible);
+      push(@{$timegrouped->{$mark}}, $_);
+   } @{$data->[0]};
+
+   my $return = [];
+   foreach my $timestamp (sort {$a <=> $b} keys %$timegrouped){
+      my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($timegrouped->{$timestamp}->[0][1]);
+      my $sdata = {
+         "Date" => sprintf('%02d.%02d.%04d', $mday, $mon+1, $year + 1900),
+         "Time" => sprintf('%02d:%02d:%02d', $hour, $min, $sec),
+         "Stamp" => $timegrouped->{$timestamp}->[0][1],
+      };         
+      foreach my $item (@{$timegrouped->{$timestamp}}){
+         my ($texttime, $timestamp, $topic, $value) = @$item;
+         my @elements = split(/\//, $topic);
+         my $name = $elements[-1] eq 'power' ? 'Power' : 'Value'.$elements[-1];
+
+         $self->{$topic} = XHome::Sensor->new({topic => $topic})
+            unless(exists $self->{$topic});
+         my $sensor = $self->{$topic};
+         $sdata->{$name} = sprintf("%.3f", $value / ($sensor->display->{divider} || 1));
+
+         if(my $range = $sensor->{alarmobj}->range()){
+            $sdata->{'Alarm'} = $range->[0];
+         }
+      }
+      push(@$return, $sdata);   
+   };
+
+   $return;
+
+};
+
+helper render_jsonp => sub {
+   my $self = shift;
+   my %render = @_;
+
+   if(defined $render{'json'} and my $cb = $self->param('callback')){
+      $self->render(text => "$cb (".
+         encode_json($render{'json'}{'result'})
+         . " )"
+      );
+   }
+   else {
+      $self->render(%render);
+   }
+};
+
 
 # Under is a Mojolicious syntax tag for eliminating repetitive coding.
 # If you have something that you want run every time an API call 
@@ -129,7 +186,7 @@ get '/data/:id' => sub {
 
     my @data = $self->sql("select * from $topicstable where id = '$id'");
     
-    return $self->render(json => \@data);
+    return $self->render_jsonp(json => \@data);
 };
 
 # http://localhost:3080/topic/list?path=/sensors/112
@@ -141,7 +198,7 @@ get '/topic/list' => sub {
     my $type   = $self->param('type');
     my $path   = $self->param('path');
 
-    return $self->render(json => {result => $self->topics($path, $type), message => "OK",debug => $type});
+    return $self->render_jsonp(json => {result => $self->topics($path, $type), message => "OK",debug => $type});
 };
 
 # http://localhost:3080/topic/now?path=/sensors/112/power
@@ -150,7 +207,7 @@ get '/topic/now' => sub {
     my $type   = 'now';
     my $path   = $self->param('path');
 
-    return $self->render(json => {result => $self->topics($path, $type), message => "OK",debug => $type});
+    return $self->render_jsonp(json => {result => $self->topics($path, $type), message => "OK",debug => $type});
 };
 
 # http://localhost:3080/topic/rollup/avg/1d?path=/sensors/112/power&start=1423048000&end=1423049000
@@ -164,9 +221,11 @@ get '/topic/rollup/:rollup/:interval' => sub {
     my ($cnt, $inter) = $interval =~ /(\d+)(\S+)/; # 2d => 1,d
     my $seconds = ($cnt * $timeWindow->{$inter});
   
-    my $path  = $self->param('path');
-    my $start = $self->param('start');
-    my $end   = $self->param('end');
+    # Special Parameters
+    my $path      = $self->param('path');
+    my $start     = $self->param('start');
+    my $end       = $self->param('end');
+    my $prepare   = $self->param('prepare');
 
     # Support negative values for last x seconds
     $start = time + $start if($start < 0);
@@ -197,7 +256,10 @@ get '/topic/rollup/:rollup/:interval' => sub {
       push(@{$return->[0]}, @{$erg->[0]});
     }
 
-    return $self->render(json => {result => $return, message => "OK"});
+    $return = $self->preparedata($return)
+      if($prepare);
+
+    return $self->render_jsonp(json => {result => $return, message => "OK"});
 };
 
 # http://localhost:3080/411/addtogroup/Garten
@@ -213,7 +275,7 @@ get '/:topic/addtogroup/:group' => sub {
          my $erg    = $self->sql("REPLACE INTO $groupstable (GROUPNAME, TOPICNAME) VALUES ('$group','$topic->[0]')");
       }
    }
-   return $self->render(json => {result => 1, message => "Topic with id $topic added to group $group"});
+   return $self->render_jsonp(json => {result => 1, message => "Topic with id $topic added to group $group"});
 };
 
 # http://localhost:3080/group/list
@@ -222,7 +284,7 @@ get '/group/list' => sub {
     my $self  = shift;
     my $type  = $self->param('type') || '';
 
-    return $self->render(json => {result => $self->groups('', $type), message => "OK"});
+    return $self->render_jsonp(json => {result => $self->groups('', $type), message => "OK"});
 };
 
 # http://localhost:3080/group/delete/Garten
@@ -231,7 +293,7 @@ get '/group/delete/:name' => sub {
     my $name  = $self->stash('name');
 
     my $data = $self->sql("DELETE FROM $groupstable WHERE GROUPNAME = '$name'");
-    return $self->render(json => {result => $data, message => "OK"});
+    return $self->render_jsonp(json => {result => $data, message => "OK"});
 };
 
 # http://localhost:3080/group/add/Garten
@@ -240,16 +302,16 @@ get '/group/add/:name' => sub {
     my $name  = $self->stash('name');
 
     if($self->groups($name)->[0][0]){
-      return $self->render(json => {result => "0", message => "Table $name exists!", debug => $self->groups($name)});
+      return $self->render_jsonp(json => {result => "0", message => "Table $name exists!", debug => $self->groups($name)});
     }
 
     my $erg    = $self->sql("insert into $groupstable (GROUPNAME, TOPICNAME) values ('$name','')");
     my $new_id = $self->lastInsertId;
     
     if($new_id){
-        return $self->render(json => {result => "1", message => "OK"});
+        return $self->render_jsonp(json => {result => "1", message => "OK"});
     }else{
-        return $self->render(json => {result => "0", message => "Insert Failure"});
+        return $self->render_jsonp(json => {result => "0", message => "Insert Failure"});
     }
 };
 

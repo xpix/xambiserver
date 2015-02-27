@@ -136,8 +136,6 @@ sub render_jsonp {
    else {
       $c->render(%render);
    }
-
-   
 }
 
 # Check payload every x seconds and publish mqtt packets
