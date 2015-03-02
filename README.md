@@ -5,7 +5,7 @@ By Frank Herrmann (xpixer@gmail.com)
 ##Synopsis
 The xambiserver project are a couple of tools to install a MQTT Network and Webinterface to display the saved Sensor-Data from a MQTT Broker. This tools are written in Perl and need some additional Modules, they have to install on youre Linux System. 
 
-![Flow](https://docs.google.com/drawings/d/1GnBoqVRGj3NmeoqORtqBvDVO1zspge9jmhQCFXd8qPQ/pub?w=480&h=360)
+![Flow](https://docs.google.com/drawings/d/1GnBoqVRGj3NmeoqORtqBvDVO1zspge9jmhQCFXd8qPQ/pub?w=960&h=720)
 
 You can choose your infrastructure to install follow tools:
 
