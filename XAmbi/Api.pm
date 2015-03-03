@@ -105,17 +105,8 @@ sub publish {
       $serie = [{$serie => $value}];
    }
 
-   my $share = [];
-
    foreach my $entry (@$serie){
       my($topic, $value) = each %$entry;
-
-      # Save in shared Memory for web process
-      push(@$share, {
-         topic => $topic,
-         when  => time,
-         value => $value,
-      });
 
       # ok, ugly solution but it works :)
       my $mosquito = sprintf('/usr/bin/mosquitto_pub -h %s -t %s -m "%s" -q 1', 
@@ -125,6 +116,8 @@ sub publish {
       $obj->error("Call failed for topic: $topic with value: $value") 
          if($erg != 0);
    }
+
+   $serie = undef;
 
    return 1;
 }

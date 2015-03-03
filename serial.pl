@@ -21,9 +21,6 @@ print STDERR "Init ...\n";
 my $port = shift || '/dev/ttyAMA0';
 
 # Geras MQTT API
-my $xambi = XAmbi::Api->new({
-   host   => 'localhost',
-});
    
 #--------------------------
 my $cv = AnyEvent->condvar;
@@ -52,7 +49,7 @@ my $w = AnyEvent->timer (after => 5, interval => 60, cb => sub {
       { sprintf( '/sensors/%d/2',      $node) => $swpfree },
    );   
 
-   $xambi->publish($PAYLOAD);
+   XAmbi::Api->new->publish($PAYLOAD);
 });
 
 # SerialPort read Event
@@ -63,6 +60,7 @@ my $hdl =
 
 # we assume a request starts with a single line
 my @start_request; 
+
 @start_request = (line => sub {
    my ($hdl, $line) = @_;
    printf STDERR "%s %s\n", scalar localtime(), $line 
@@ -72,6 +70,7 @@ my @start_request;
    # push next request read, possibly from a nested callback
    $hdl->push_read (@start_request);
 });
+
 # now push the first @start_request
 $hdl->push_read(@start_request);
 
@@ -103,7 +102,7 @@ sub handle_message {
       });   
    }
 
-   $xambi->publish($PAYLOAD);   
+   XAmbi::Api->new->publish($PAYLOAD);
 }
 
 sub checkValues {
@@ -114,9 +113,10 @@ sub checkValues {
       my $topic = "/sensor/$node/$indexer";
 		my $sensor = XHome::Sensor->new({
 			topic => $topic,
-			geras => $xambi,
+         value => $value,
 		});
       $i++;
 	}
+
 	return 1;
 }

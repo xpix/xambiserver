@@ -3,8 +3,9 @@ package XHome::Sensor;
 use warnings;
 use strict;
 
-use XHome::Alarm;
+use Carp;
 
+use XHome::Alarm;
 use Config::General;
 
 
@@ -61,11 +62,6 @@ sub new {
    $self->when ( delete $args->{'when'} || $time );
    $self->value( delete $args->{'value'} )   || 0;
    $self->geras( delete $args->{'geras'} )   || 0;
-
-   # Alarmobject init
-   $self->{alarmobj} = XHome::Alarm->new({
-      sensor => $self,
-   }) or die "Cannot init XHome::Alarm";
 
    return $self;
 }
@@ -193,9 +189,13 @@ sub value {
 		my ($div, $min, $max) = ($obj->divider, $obj->display->{minimumValue}, $obj->display->{maximumValue});
 		my $value = $val / $div;
 
+      # Alarmobject init
+      my $alarmobj = XHome::Alarm->new({
+         sensor => $obj,
+      }) or die "Cannot init XHome::Alarm";
       # Check alarm status
-      $obj->{alarmobj}->check($value)
-         if(ref $obj->{alarmobj});
+      $alarmobj->check($value);
+      $alarmobj = undef;
 
 		if(defined $min and defined $max and ($value < $min or $value > $max)){
 			return $obj->error(sprintf("Value %s for Node %s are not correct! Value not between %s to %s!",

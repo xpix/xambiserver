@@ -137,7 +137,7 @@ sub check {
    }
 
    my $topic = $sensor->topic;
-   my $groupname = $sensor->group('notFull') || 'unknown';
+   my $typename = $sensor->type;
    my $msg = $cfg_alarm->{message};
    $msg =~ s/(\$\w+)/$1/eeg;
 
