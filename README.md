@@ -2,10 +2,12 @@ xambiserver for XAmbi Network
 -----------
 By Frank Herrmann (xpixer@gmail.com)
 
-![Screenshot from Webinterface](https://github.com/xpix/xambiserver/blob/master/public/images/capture.gif?raw=true)
-
 ##Synopsis
-The xambiserver project are a couple of tools to install a MQTT Network and Webinterface to display the saved Sensor-Data from a MQTT Broker. This tools are written in Perl and need some additional Modules, they have to install on youre Linux System. You can choose your infrastructure to install follow tools:
+The xambiserver project are a couple of tools to install a MQTT Network and Webinterface to display the saved Sensor-Data from a MQTT Broker. This tools are written in Perl and need some additional Modules, they have to install on youre Linux System. 
+
+![Flow](https://docs.google.com/drawings/d/1GnBoqVRGj3NmeoqORtqBvDVO1zspge9jmhQCFXd8qPQ/pub?w=960&h=720)
+
+You can choose your infrastructure to install follow tools:
 
 - Raspberry: Webinterface and [Gateway](https://github.com/xpix/XAmbi) for [XAmbi Nodes](https://github.com/xpix/XAmbi/tree/master/Xambi_kids)
 - NAS for MQTT Broker and Subscribe tool to save all Data in sqlite-db file.
@@ -30,6 +32,9 @@ The XAmbi-API will connect to a sqlite DB and return all Data as a JSON API Webs
 
 ##Check Webinterface
 `firefox http://localhost:3080`
+
+![Screenshot from Webinterface](https://github.com/xpix/xambiserver/blob/master/public/images/capture.gif?raw=true)
+
 
 ##Screens
 To start all processes in one Screen session, please call:
