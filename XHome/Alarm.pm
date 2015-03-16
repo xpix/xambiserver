@@ -121,6 +121,7 @@ sub check {
    # Check for alarm config or global (alarm for every Sensor i.e. Power) alarm config
    my $cfg_alarm = $cfg->{alarms}{$sensor->type};
    $cfg_alarm = (ref $cfg->{alarms}{$sensor->name} and $cfg->{alarms}{$sensor->name}{global} ? $cfg->{alarms}{$sensor->name} : $cfg_alarm);
+dum($sensor->name );
    return 0 if(not $cfg_alarm);
 
    if(exists $cfg_alarm->{name} and $cfg_alarm->{name} ne $sensor->name){
@@ -161,7 +162,7 @@ sub SMS {
 #-------------------------------------------------------------------------------
    my $obj   = shift || die "No Object!";
    my $msg   = shift || die "No Message!";
-dum($msg);
+
    my $cfg   = $obj->cfg->{alarmtype}->{SMS}
       or die "Can't find alarm configuration for type: SMS!";
   
@@ -170,7 +171,29 @@ dum($msg);
       "curl -s -X POST %s --data-urlencode 'To=%s'  --data-urlencode 'From=%s'  --data-urlencode 'Body=%s' -u %s:%s",
          $url, $cfg->{to}, $cfg->{from}, $msg, $cfg->{account_sid}, $cfg->{auth_token}
    );
+
    return `$curl`;
+}
+
+#-------------------------------------------------------------------------------
+sub TWITTER {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || die "No Object!";
+   my $msg   = shift || die "No Message!";
+
+   my $cfg   = $obj->cfg->{alarmtype}->{TWITTER}
+      or die "Can't find alarm configuration for type: SMS!";
+   my $oAuth = `cat $cfg->{config}`;
+   $oAuth =~ s/\n//sig;
+
+   my $url = 'https://api.twitter.com/1.1/statuses/update.json';
+   my $curl = sprintf(
+      "curl --request 'POST' '%s' --data 'status=XAmbi: %s' --header '%s'",
+         $url, $oAuth, $msg
+   );
+   my $erg = `$curl`;
+dum($curl);
+   return $erg;
 }
 
 #-------------------------------------------------------------------------------

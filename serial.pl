@@ -85,9 +85,10 @@ sub handle_message {
    my $PAYLOAD = [];
    
    my ($node, $paramsize, $milliVolt, @values) = split(/\s+/, $line);
-   return 0 if($node =~ /[a-z]+/i);
-   return 0 if(not scalar @values);
-	return 0 if(not checkValues($node, $milliVolt, @values));
+   return giveNodeId($line)   if($node >= 999);
+   return 0                   if($node =~ /[a-z]+/i);
+   return 0                   if(not scalar @values);
+	return 0                   if(not checkValues($node, $milliVolt, @values));
 
    # save milliVolt for sensor
    push($PAYLOAD, {
@@ -103,6 +104,37 @@ sub handle_message {
    }
 
    XAmbi::Api->new->publish($PAYLOAD);
+}
+
+sub giveNodeId {
+	my ($line) = shift or return warn "Hmm, Strange no chars?!";
+   my $newNodeId = 0;
+   # "999 9999 100"
+   my ($node, $signal, $startid) = split(/\s+/, $line);
+   # get next possible id in id-range:
+   # 1. get all Sensortypes in Config
+   my $sensortypes = XHome::Sensor->new({topic => '/0'})->cfg->{sensor};
+   # 2. list all topics from API
+   my $topics = XAmbi::Api->new->series();
+   foreach my $sensortype (@$sensortypes){
+      if($startid == $sensortype->{startNodeId}){
+         # Catched
+         for(my $i = $startid; $i <= $sensortype->{endNodeId}; $i++){
+            if( not grep(/\/$i\//, @$topics) ){
+               $newNodeId = $i;
+               last;
+            }
+         }
+      }
+   }
+   if(not $newNodeId){
+      die "Unable to find a free Id for startid $startid!";
+   }
+   else {
+      # Send new id to Node ... 
+   }
+      
+   
 }
 
 sub checkValues {

@@ -15,10 +15,12 @@ my $xambi = XAmbi::Api->new({
 
 
 my $sensor = XHome::Sensor->new({
-   topic => '/sensors/112/1',
+   topic => '/sensors/411/0',
    geras => $xambi,
 });
 
-dum( $sensor->config() );
+
+
+dum( $sensor->value(1) );
 
 exit;
