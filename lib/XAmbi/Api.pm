@@ -7,6 +7,7 @@ use Carp;
 use LWP::UserAgent;
 use JSON::XS;
 use URI::Escape;
+use InfluxDB;
 
 use Data::Dumper;
 sub dum { warn Dumper(@_) };
@@ -88,13 +89,13 @@ sub error {
 
 =pod
 
-=head2 C<publish( $serie, $value )>
+=head2 C<publish_mqtt( $serie, $value )>
 
 Send data to mqtt broker via publish and save to a shared memory for access for other processes.
 
 =cut
 #-------------------------------------------------------------------------------
-sub publish {
+sub publish_mqtt {
 #-------------------------------------------------------------------------------
    my $obj   = shift || confess "No Object!";
    my $serie = shift || confess "No Serie!";
@@ -121,6 +122,40 @@ sub publish {
 
    return 1;
 }
+
+=pod
+
+=head2 C<publish_influx($node, $paramsize, $milliVolt, @values)>
+
+Send data to mqtt broker via publish and save to a shared memory for access for other processes.
+
+=cut
+#-------------------------------------------------------------------------------
+sub publish_influx {
+#-------------------------------------------------------------------------------
+   my $obj   = shift || confess "No Object!";
+   my $node = shift || confess "No Node!";
+   my $paramsize = shift || '';
+   my $milliVolt = shift || die "No Millivolt!";
+   my @values = @_;
+
+   my $ValNames = XHome::Sensor->new({topic => "/sensors/$node/power"})->config->{ValNames}
+      or return warn "Unable to find ValNames for Node $node!";
+
+   my $send = encode_json(
+      {
+         name => "sensor_$node",
+         columns => $ValNames,
+         points => [[($milliVolt, @values)]],
+      }
+   );
+   
+   my $command = "curl --silent -X POST -d '[$send]' 'http://localhost:8086/db/xambi/series?u=root&p=root'";
+   # dum $command;
+   my $erg = `$command`;
+   return 1;
+}
+
 
 =pod
 

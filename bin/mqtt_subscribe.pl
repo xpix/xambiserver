@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+use lib './../lib';
+
 use DBI();
 use strict;
 use warnings;

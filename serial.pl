@@ -5,6 +5,8 @@ $ENV{CONFIGFILE} = 'cfg/sensors.cfg';
 use strict;
 use warnings;
 
+use lib './lib';
+
 use AnyEvent;
 use AnyEvent::SerialPort;
 use XAmbi::Api;
@@ -49,7 +51,7 @@ my $w = AnyEvent->timer (after => 5, interval => 60, cb => sub {
       { sprintf( '/sensors/%d/2',      $node) => $swpfree },
    );   
 
-   XAmbi::Api->new->publish($PAYLOAD);
+   XAmbi::Api->new->publish_mqtt($PAYLOAD);
 });
 
 # SerialPort read Event
@@ -85,6 +87,7 @@ sub handle_message {
    my $PAYLOAD = [];
    
    my ($node, $paramsize, $milliVolt, @values) = split(/\s+/, $line);
+
    return giveNodeId($line)   if($node >= 999);
    return 0                   if($node =~ /[a-z]+/i);
    return 0                   if(not scalar @values);
@@ -103,7 +106,9 @@ sub handle_message {
       });   
    }
 
-   XAmbi::Api->new->publish($PAYLOAD);
+   XAmbi::Api->new->publish_mqtt($PAYLOAD);
+
+   XAmbi::Api->new->publish_influx($node, $paramsize, $milliVolt, @values);
 }
 
 sub giveNodeId {

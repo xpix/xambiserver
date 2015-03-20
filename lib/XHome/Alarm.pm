@@ -121,7 +121,6 @@ sub check {
    # Check for alarm config or global (alarm for every Sensor i.e. Power) alarm config
    my $cfg_alarm = $cfg->{alarms}{$sensor->type};
    $cfg_alarm = (ref $cfg->{alarms}{$sensor->name} and $cfg->{alarms}{$sensor->name}{global} ? $cfg->{alarms}{$sensor->name} : $cfg_alarm);
-dum($sensor->name );
    return 0 if(not $cfg_alarm);
 
    if(exists $cfg_alarm->{name} and $cfg_alarm->{name} ne $sensor->name){

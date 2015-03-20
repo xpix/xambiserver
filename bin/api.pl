@@ -1,3 +1,5 @@
+use lib "$ENV{HOME}/xambiserver/lib";
+
 use Mojolicious::Lite;
 use JSON::XS;
 use DBI;
@@ -6,12 +8,12 @@ use Data::Dumper;
 sub dum { warn Dumper(@_) };
 
 
-$ENV{CONFIGFILE} = 'cfg/sensors.cfg';
+$ENV{CONFIGFILE} = "$ENV{HOME}/xambiserver/cfg/sensors.cfg";
 
 # Global handle for db connections
 my $created = "";
 my $dbh = "";
-my $database   = "db/xambimqtt.db";
+my $database   = "$ENV{HOME}/xambiserver/db/xambimqtt.db";
 my $topicstable= "mqtt";
 my $groupstable= "mqtt_groups";
 

@@ -6,6 +6,8 @@ use strict;
 $ENV{CONFIGFILE}        = 'cfg/sensors.cfg';
 $ENV{CONFIGFILE_USERS}  = 'cfg/users.cfg';
 
+use lib './lib';
+
 # only for debug
 use Data::Dumper;
 sub dum { warn Dumper(@_)};
@@ -75,7 +77,7 @@ sub _timedata {
          my $sensor = $TYPES->{$topic};
          $sdata->{$name} = sprintf("%.3f", $value / ($sensor->display->{divider} || 1));
 
-         if(my $range = $sensor->{alarmobj}->range()){
+         if(ref $sensor->{alarmobj} and my $range = $sensor->{alarmobj}->range()){
             $sdata->{'Alarm'} = $range->[0];
          }
       }
@@ -153,7 +155,7 @@ get '/demo' => sub {
 
 get '/' => sub {
    my $c = shift;
-
+   
    my %cfg  = Config::General->new($ENV{CONFIGFILE})->getall;
    my %ucfg = Config::General->new($ENV{CONFIGFILE_USERS})->getall;
 
@@ -226,6 +228,5 @@ get '/sensor' => sub {
       $sub => $sensor->$sub($params),
    });
 };
-
 
 app->start;
